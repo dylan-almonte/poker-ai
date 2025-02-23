@@ -165,7 +165,7 @@ void Game::handleAction(ActionType action, int amount) {
 
 void Game::takeAction(ActionType action, int amount) {
     if (!isValidAction(action, amount)) {
-        throw std::invalid_argument("Invalid action");
+        throw std::invalid_argument("Invalid action: " + actionTypeToString(action) + " with amount " + std::to_string(amount));
     }
     
     handleAction(action, amount);
