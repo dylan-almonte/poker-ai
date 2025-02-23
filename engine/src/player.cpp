@@ -29,7 +29,7 @@ std::unique_ptr<Action> Player::call(const std::vector<std::shared_ptr<Player>>&
 }
 
 std::unique_ptr<Action> Player::raiseTo(int chips) {
-    chips = addToPot(chips);
+    addToPot(chips);
     auto raise = std::make_unique<Raise>();
     raise->setAmount(chips);
     return raise;

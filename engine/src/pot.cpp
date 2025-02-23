@@ -44,8 +44,8 @@ int Pot::getTotal() const {
     return total;
 }
 
-std::vector<std::unordered_map<Player*, int>> Pot::getSidePots() const {
-    std::vector<std::unordered_map<Player*, int>> side_pots;
+std::vector<std::map<std::shared_ptr<Player>, int>> Pot::getSidePots() const {
+    std::vector<std::map<std::shared_ptr<Player>, int>> side_pots;
     
     if (pot_.empty()) {
         return side_pots;
@@ -63,14 +63,14 @@ std::vector<std::unordered_map<Player*, int>> Pot::getSidePots() const {
             }
         }
 
-        // Create new side pot
+        // Create new side pot with shared_ptr
         side_pots.emplace_back();
         auto& current_pot = side_pots.back();
 
         // Remove min_bet from each player and add to side pot
         std::vector<Player*> players_to_remove;
         for (auto& [player, chips] : remaining_chips) {
-            current_pot[player] = min_bet;
+            current_pot[std::shared_ptr<Player>(player)] = min_bet;
             chips -= min_bet;
             if (chips == 0) {
                 players_to_remove.push_back(player);

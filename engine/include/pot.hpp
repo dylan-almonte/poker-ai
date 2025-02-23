@@ -19,7 +19,7 @@ public:
     int getTotal() const;
 
     // Side pot calculation
-    std::vector<std::unordered_map<Player*, int>> getSidePots() const;
+    std::vector<std::map<std::shared_ptr<Player>, int>> getSidePots() const;
 
     // Unique identifier
     const std::string& getUid() const { return uid_; }

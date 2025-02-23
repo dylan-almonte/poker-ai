@@ -3,9 +3,10 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <map>
 #include "player.hpp"
 #include "table.hpp"
-#include "evaluator.hpp"
+#include "evaluation/evaluator.hpp"
 
 class PokerEngine {
 public:
@@ -26,9 +27,12 @@ private:
     void postBettingAnalysis();
     
     std::vector<std::vector<std::shared_ptr<Player>>> rankPlayersByBestHand();
-    std::unordered_map<std::shared_ptr<Player>, int> computePayouts(
-        const std::vector<std::vector<std::shared_ptr<Player>>>& ranked_player_groups);
-    void payoutPlayers(const std::unordered_map<std::shared_ptr<Player>, int>& payouts);
+    std::map<std::shared_ptr<Player>, int> computePayouts(
+        const std::vector<std::vector<std::shared_ptr<Player>>>& rankedPlayerGroups);
+    void payoutPlayers(const std::map<std::shared_ptr<Player>, int>& payouts);
+    std::map<std::shared_ptr<Player>, int> processSidePot(
+        const std::vector<std::shared_ptr<Player>>& playerGroup,
+        const std::map<std::shared_ptr<Player>, int>& pot);
 
     std::shared_ptr<PokerTable> table_;
     int small_blind_;

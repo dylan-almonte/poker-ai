@@ -9,6 +9,8 @@
 
 class Player {
 public:
+    
+    virtual ~Player() = default;
     Player(const std::string& name, int initial_chips, std::shared_ptr<Pot> pot);
 
     // Action methods

@@ -10,8 +10,8 @@ public:
     Evaluator();
 
     // Main evaluation methods
-    int evaluate(const std::vector<std::shared_ptr<Card>>& cards,
-                const std::vector<std::shared_ptr<Card>>& board);
+    int evaluate(const std::vector<int>& cards,
+                const std::vector<int>& board);
     
     // Hand ranking methods
     int getRankClass(int hand_rank);

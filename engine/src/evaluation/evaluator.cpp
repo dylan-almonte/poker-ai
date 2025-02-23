@@ -1,5 +1,6 @@
-#include "evaluator.hpp"
-#include "lookup_table.hpp"
+#include "evaluation/evaluator.hpp"
+#include "evaluation/lookup_table.hpp"
+#include "evaluation/eval_card.hpp"
 #include <algorithm>
 #include <numeric>
 
@@ -7,16 +8,16 @@ Evaluator::Evaluator()
     : table_(std::make_unique<LookupTable>()) {
 }
 
-int Evaluator::evaluate(const std::vector<std::shared_ptr<Card>>& cards,
-                       const std::vector<std::shared_ptr<Card>>& board) {
+int Evaluator::evaluate(const std::vector<int>& cards,
+                       const std::vector<int>& board) {
     std::vector<int> eval_cards;
     
     // Convert cards to evaluation format
     for (const auto& card : cards) {
-        eval_cards.push_back(card->getEvalCard());
+        eval_cards.push_back(card);
     }
     for (const auto& card : board) {
-        eval_cards.push_back(card->getEvalCard());
+        eval_cards.push_back(card);
     }
 
     // Evaluate based on number of cards
