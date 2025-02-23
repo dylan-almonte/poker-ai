@@ -1,73 +1,124 @@
 #include "card.hpp"
-#include <stdexcept>
-#include <unordered_map>
-#include <algorithm>
+#include <bitset>
+#include <sstream>
+#include <numeric>
 
-Card::Card(int rank, const std::string& suit) {
-    if (rank < 2 || rank > 14) {
-        throw std::invalid_argument("Rank must be between 2 and 14");
-    }
-    auto suits = getAllSuits();
-    if (std::find(suits.begin(), suits.end(), suit) == suits.end()) {
-        throw std::invalid_argument("Invalid suit");
-    }
-    rank_ = rank;
-    suit_ = suit;
+const std::string Card::STR_RANKS = "23456789TJQKA";
+const std::array<int, 13> Card::PRIMES = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41};
+
+const std::unordered_map<char, int> Card::CHAR_RANK_TO_INT_RANK = {
+    {'2', 0}, {'3', 1}, {'4', 2}, {'5', 3}, {'6', 4}, {'7', 5}, {'8', 6},
+    {'9', 7}, {'T', 8}, {'J', 9}, {'Q', 10}, {'K', 11}, {'A', 12}
+};
+
+const std::unordered_map<char, int> Card::CHAR_SUIT_TO_INT_SUIT = {
+    {'s', 1}, // spades
+    {'h', 2}, // hearts
+    {'d', 4}, // diamonds
+    {'c', 8}  // clubs
+};
+
+const std::string Card::INT_SUIT_TO_CHAR_SUIT = "xshxdxxxc";
+
+const std::unordered_map<int, std::string> Card::PRETTY_SUITS = {
+    {1, "♠"}, // spades
+    {2, "♥"}, // hearts
+    {4, "♦"}, // diamonds
+    {8, "♣"}  // clubs
+};
+
+Card::Card(const std::string& card_string) : card_int(fromString(card_string).toInt()) {}
+
+Card::Card(int card_int) : card_int(card_int) {}
+
+Card Card::fromString(const std::string& card_string) {
+    char rank_char = card_string[0];
+    char suit_char = card_string[1];
     
-    // TODO: Implement eval_card_ calculation similar to EvaluationCard
+    int rank_int = CHAR_RANK_TO_INT_RANK.at(rank_char);
+    int suit_int = CHAR_SUIT_TO_INT_SUIT.at(suit_char);
+    int rank_prime = PRIMES[rank_int];
+
+    int bitrank = 1 << rank_int << 16;
+    int suit = suit_int << 12;
+    int rank = rank_int << 8;
+
+    return Card(bitrank | suit | rank | rank_prime);
 }
 
-Card::Card(const std::string& rank, const std::string& suit) 
-    : Card(strToRank(rank), suit) {
+Card Card::fromInt(int card_int) {
+    return Card(card_int);
 }
 
-std::vector<std::string> Card::getAllSuits() {
-    return {"spades", "diamonds", "clubs", "hearts"};
+int Card::getRank() const {
+    return (card_int >> 8) & 0xF;
 }
 
-std::vector<std::string> Card::getAllRanks() {
-    return {"2", "3", "4", "5", "6", "7", "8", "9", "10", 
-            "jack", "queen", "king", "ace"};
+int Card::getSuit() const {
+    return (card_int >> 12) & 0xF;
 }
 
-int Card::strToRank(const std::string& str) {
-    static const std::unordered_map<std::string, int> rankMap = {
-        {"2", 2}, {"3", 3}, {"4", 4}, {"5", 5}, {"6", 6},
-        {"7", 7}, {"8", 8}, {"9", 9}, {"10", 10}, {"t", 10},
-        {"jack", 11}, {"j", 11}, {"queen", 12}, {"q", 12},
-        {"king", 13}, {"k", 13}, {"ace", 14}, {"a", 14}
-    };
+int Card::getBitRank() const {
+    return (card_int >> 16) & 0x1FFF;
+}
 
-    auto it = rankMap.find(str);
-    if (it == rankMap.end()) {
-        throw std::invalid_argument("Invalid rank string");
+int Card::getPrime() const {
+    return card_int & 0x3F;
+}
+
+std::string Card::toString() const {
+    std::string result;
+    result += STR_RANKS[getRank()];
+    result += INT_SUIT_TO_CHAR_SUIT[getSuit()];
+    return result;
+}
+
+std::string Card::prettyString() const {
+    return "[ " + std::string(1, STR_RANKS[getRank()]) + " " + 
+           PRETTY_SUITS.at(getSuit()) + " ]";
+}
+
+std::string Card::binaryString() const {
+    std::bitset<32> bits(card_int);
+    std::string bstr = bits.to_string();
+    std::string result;
+    
+    for (size_t i = 0; i < bstr.length(); i += 4) {
+        if (i > 0) result += " ";
+        result += bstr.substr(i, 4);
     }
-    return it->second;
+    
+    return result;
 }
 
-std::string Card::rankToStr(int rank) const {
-    static const std::unordered_map<int, std::string> rankMap = {
-        {2, "2"}, {3, "3"}, {4, "4"}, {5, "5"}, {6, "6"},
-        {7, "7"}, {8, "8"}, {9, "9"}, {10, "10"},
-        {11, "jack"}, {12, "queen"}, {13, "king"}, {14, "ace"}
-    };
-
-    auto it = rankMap.find(rank);
-    if (it == rankMap.end()) {
-        throw std::invalid_argument("Invalid rank");
+std::vector<Card> cardsFromStrings(const std::vector<std::string>& card_strs) {
+    std::vector<Card> cards;
+    for (const auto& card_str : card_strs) {
+        cards.push_back(Card(card_str));
     }
-    return it->second;
+    return cards;
 }
 
-std::string Card::suitToIcon(const std::string& suit) const {
-    static const std::unordered_map<std::string, std::string> iconMap = {
-        {"hearts", "♥"}, {"diamonds", "♦"}, 
-        {"clubs", "♣"}, {"spades", "♠"}
-    };
+int primeProductFromHand(const std::vector<Card>& cards) {
+    return std::accumulate(cards.begin(), cards.end(), 1,
+        [](int product, const Card& card) { return product * card.getPrime(); });
+}
 
-    auto it = iconMap.find(suit);
-    if (it == iconMap.end()) {
-        throw std::invalid_argument("Invalid suit");
+int primeProductFromRankbits(int rankbits) {
+    int product = 1;
+    for (size_t i = 0; i < 13; i++) {
+        if (rankbits & (1 << i)) {
+            product *= Card::PRIMES[i];
+        }
     }
-    return it->second;
+    return product;
+}
+
+std::string prettyPrintCards(const std::vector<Card>& cards) {
+    std::stringstream ss;
+    for (size_t i = 0; i < cards.size(); i++) {
+        if (i > 0) ss << " ";
+        ss << cards[i].prettyString();
+    }
+    return ss.str();
 } 

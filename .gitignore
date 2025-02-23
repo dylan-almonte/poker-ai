@@ -1,0 +1,10 @@
+build/
+bin/
+lib/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.lib
+*.exp

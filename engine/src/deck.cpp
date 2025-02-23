@@ -1,57 +1,49 @@
 #include "deck.hpp"
-#include <algorithm>
 #include <random>
+#include <algorithm>
 #include <stdexcept>
 
-Deck::Deck(const std::vector<std::string>& include_suits,
-           const std::vector<int>& include_ranks)
-    : include_suits_(include_suits)
-    , include_ranks_(include_ranks) {
-    reset();
+std::vector<Card> Deck::FULL_DECK;
+
+Deck::Deck() {
+    cards = getFullDeck();
+    shuffle();
 }
 
-std::shared_ptr<Card> Deck::pick(bool random) {
-    if (cards_in_deck_.empty()) {
-        throw std::runtime_error("Deck is empty - please use Deck::reset()");
-    }
-
-    size_t index;
-    if (random) {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, cards_in_deck_.size() - 1);
-        index = dis(gen);
-    } else {
-        index = cards_in_deck_.size() - 1;
-    }
-
-    auto card = cards_in_deck_[index];
-    cards_in_deck_.erase(cards_in_deck_.begin() + index);
-    dealt_cards_.push_back(card);
-    return card;
-}
-
-void Deck::remove(std::shared_ptr<Card> card) {
-    auto it = std::find(cards_in_deck_.begin(), cards_in_deck_.end(), card);
-    if (it != cards_in_deck_.end()) {
-        cards_in_deck_.erase(it);
-        dealt_cards_.push_back(card);
-    }
-}
-
-void Deck::reset() {
-    cards_in_deck_.clear();
-    dealt_cards_.clear();
-
-    // Create all possible cards from the included suits and ranks
-    for (const auto& suit : include_suits_) {
-        for (int rank : include_ranks_) {
-            cards_in_deck_.push_back(std::make_shared<Card>(rank, suit));
+std::vector<Card> Deck::getFullDeck() {
+    if (FULL_DECK.empty()) {
+        // Create the standard 52 card deck
+        for (char rank : Card::STR_RANKS) {
+            for (const auto& [suit, _] : Card::CHAR_SUIT_TO_INT_SUIT) {
+                std::string card_str;
+                card_str += rank;
+                card_str += suit;
+                FULL_DECK.push_back(Card(card_str));
+            }
         }
     }
+    return FULL_DECK;
+}
 
-    // Shuffle the deck
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    std::shuffle(cards_in_deck_.begin(), cards_in_deck_.end(), gen);
+void Deck::shuffle() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(cards.begin(), cards.end(), gen);
+}
+
+std::vector<Card> Deck::draw(size_t num) {
+    if (cards.size() < num) {
+        throw std::runtime_error(
+            "Cannot draw " + std::to_string(num) + 
+            " cards from deck of size " + std::to_string(cards.size())
+        );
+    }
+
+    std::vector<Card> drawn_cards(cards.begin(), cards.begin() + num);
+    cards.erase(cards.begin(), cards.begin() + num);
+    return drawn_cards;
+}
+
+std::string Deck::toString() const {
+    return prettyPrintCards(cards);
 } 
