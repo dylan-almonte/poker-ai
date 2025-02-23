@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include "card.hpp"
+#include "lookup_table.hpp"
 
 class Evaluator {
 public:
@@ -23,8 +24,6 @@ public:
     int evaluateSevenCards(const std::vector<int>& cards);
 
 private:
-    // Lookup table implementation will go here
-    class LookupTable;
     std::unique_ptr<LookupTable> table_;
 
     static int calculatePrimeProduct(const std::vector<int>& cards);

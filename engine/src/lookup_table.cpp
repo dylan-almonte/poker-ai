@@ -28,7 +28,46 @@ const std::unordered_map<int, std::string> LookupTable::RANK_CLASS_TO_STRING_MAP
 };
 
 LookupTable::LookupTable() {
-    generateLookupTables();
+    initFlushLookup();
+    initUnsuitedLookup();
+    initRankClasses();
+}
+
+void LookupTable::initFlushLookup() {
+    // TODO: Implement flush lookup table initialization
+}
+
+void LookupTable::initUnsuitedLookup() {
+    // TODO: Implement unsuited lookup table initialization
+}
+
+void LookupTable::initRankClasses() {
+    // TODO: Implement rank class lookup initialization
+}
+
+int LookupTable::getFlushRank(int prime_product) const {
+    auto it = flush_lookup_.find(prime_product);
+    return it != flush_lookup_.end() ? it->second : -1;
+}
+
+int LookupTable::getUnsuitedRank(int prime_product) const {
+    auto it = unsuited_lookup_.find(prime_product);
+    return it != unsuited_lookup_.end() ? it->second : -1;
+}
+
+int LookupTable::getRankClass(int hand_rank) const {
+    auto it = rank_class_lookup_.find(hand_rank);
+    return it != rank_class_lookup_.end() ? it->second : -1;
+}
+
+std::string LookupTable::classToString(int class_int) const {
+    auto it = class_strings_.find(class_int);
+    return it != class_strings_.end() ? it->second : "Invalid Class";
+}
+
+double LookupTable::getFiveCardRankPercentage(int hand_rank) const {
+    // TODO: Implement percentage calculation
+    return 0.0;
 }
 
 void LookupTable::generateLookupTables() {

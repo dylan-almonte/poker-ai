@@ -24,7 +24,7 @@ public:
     bool operator!=(const Card& other) const { return eval_card_ != other.eval_card_; }
 
     // Static methods
-    static std::set<std::string> getAllSuits();
+    static std::vector<std::string> getAllSuits();
     static std::vector<std::string> getAllRanks();
 
 private:

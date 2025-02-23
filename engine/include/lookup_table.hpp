@@ -7,6 +7,7 @@
 class LookupTable {
 public:
     LookupTable();
+    ~LookupTable() = default;
 
     // Constants for hand rankings
     static constexpr int MAX_STRAIGHT_FLUSH = 10;
@@ -22,6 +23,11 @@ public:
     // Lookup methods
     int getFlushRank(int prime_product) const;
     int getUnsuitedRank(int prime_product) const;
+    
+    // Ranking helpers
+    int getRankClass(int hand_rank) const;
+    std::string classToString(int class_int) const;
+    double getFiveCardRankPercentage(int hand_rank) const;
 
     // Rank class conversion
     static int maxToRankClass(int max_rank);
@@ -35,8 +41,14 @@ private:
                         std::unordered_map<int, int>& lookup_table);
     std::vector<int> getLexographicallyNextBitSequence(int bits);
 
+    void initFlushLookup();
+    void initUnsuitedLookup();
+    void initRankClasses();
+
     std::unordered_map<int, int> flush_lookup_;
     std::unordered_map<int, int> unsuited_lookup_;
+    std::unordered_map<int, int> rank_class_lookup_;
+    std::unordered_map<int, std::string> class_strings_;
 
     static const std::unordered_map<int, int> MAX_TO_RANK_CLASS_MAP;
     static const std::unordered_map<int, std::string> RANK_CLASS_TO_STRING_MAP;

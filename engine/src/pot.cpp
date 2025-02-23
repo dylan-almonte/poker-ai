@@ -31,8 +31,8 @@ void Pot::reset() {
     pot_.clear();
 }
 
-int Pot::getPlayerContribution(Player* player) const {
-    auto it = pot_.find(player);
+int Pot::getPlayerContribution(const Player* player) const {
+    auto it = pot_.find(const_cast<Player*>(player));
     return it != pot_.end() ? it->second : 0;
 }
 

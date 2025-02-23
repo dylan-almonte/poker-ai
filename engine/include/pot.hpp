@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <map>
 
 class Player;
 
@@ -14,7 +15,7 @@ public:
     // Chip management
     void addChips(Player* player, int chips);
     void reset();
-    int getPlayerContribution(Player* player) const;
+    int getPlayerContribution(const Player* player) const;
     int getTotal() const;
 
     // Side pot calculation
@@ -24,6 +25,6 @@ public:
     const std::string& getUid() const { return uid_; }
 
 private:
-    std::unordered_map<Player*, int> pot_;
     std::string uid_;
+    std::map<Player*, int> pot_;
 }; 

@@ -1,12 +1,14 @@
 #include "card.hpp"
 #include <stdexcept>
 #include <unordered_map>
+#include <algorithm>
 
 Card::Card(int rank, const std::string& suit) {
     if (rank < 2 || rank > 14) {
         throw std::invalid_argument("Rank must be between 2 and 14");
     }
-    if (getAllSuits().find(suit) == getAllSuits().end()) {
+    auto suits = getAllSuits();
+    if (std::find(suits.begin(), suits.end(), suit) == suits.end()) {
         throw std::invalid_argument("Invalid suit");
     }
     rank_ = rank;
@@ -19,7 +21,7 @@ Card::Card(const std::string& rank, const std::string& suit)
     : Card(strToRank(rank), suit) {
 }
 
-std::set<std::string> Card::getAllSuits() {
+std::vector<std::string> Card::getAllSuits() {
     return {"spades", "diamonds", "clubs", "hearts"};
 }
 
