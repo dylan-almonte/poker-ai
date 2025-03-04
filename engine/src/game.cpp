@@ -2,6 +2,7 @@
 #include "evaluator.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 
 Game::Game(int num_players, int starting_chips, int small_blind, int big_blind)
     : btn_loc(0)
@@ -255,4 +256,52 @@ void Game::settleHand() {
                 players[winner_id]->getChips() + amount);
         }
     }
+}
+
+void Game::printState() const {
+    std::cout << "\n=== Game State ===\n";
+    
+    // Print phase
+    std::cout << "Phase: " << phaseToString(phase) << "\n";
+    
+    // Print board
+    std::cout << "Board: ";
+    if (board.empty()) {
+        std::cout << "[]";
+    } else {
+        std::cout << prettyPrintCards(board);
+    }
+    std::cout << "\n";
+    
+    // Print pots
+    std::cout << "Pots: ";
+    for (size_t i = 0; i < pots.size(); i++) {
+        if (i > 0) std::cout << ", ";
+        std::cout << "Pot " << i << ": $" << pots[i]->get_total_amount();
+    }
+    std::cout << "\n";
+    
+    // Print players
+    std::cout << "\nPlayers:\n";
+    for (size_t i = 0; i < players.size(); i++) {
+        const auto& player = players[i];
+        std::cout << (i == static_cast<size_t>(current_player) ? "→ " : "  ");
+        std::cout << "Player " << i 
+                  << " ($" << player->getChips() << "): "
+                  << playerStateToString(player->getState())
+                  << (i == static_cast<size_t>(btn_loc) ? " [BTN] " : "       ");
+        
+        // Only show cards for active players
+        if (player->isActive() || player->isAllIn()) {
+            std::cout << " " << prettyPrintCards(player->getHand());
+        }
+        
+        // Show button position
+        // if (i == static_cast<size_t>(btn_loc)) {
+        //     std::cout << " [BTN]";
+        // }
+        
+        std::cout << "\n";
+    }
+    std::cout << "\n";
 } 

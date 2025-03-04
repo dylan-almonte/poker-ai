@@ -43,6 +43,9 @@ public:
     int getCurrentPlayer() const { return current_player; }
     HandPhase::Phase getPhase() const { return phase; }
     
+    // Add this new method
+    void printState() const;
+    
     // Player iteration helpers
     std::vector<int> getActivePlayers() const;
     int getNextActivePlayer(int from) const;

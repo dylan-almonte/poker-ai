@@ -22,15 +22,9 @@ add_library(poker_engine SHARED ${SOURCES})
 # Set include directories for the library
 target_include_directories(poker_engine 
     PUBLIC 
+        # This makes the include path available to any target that links poker_engine
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-)
-
-# Set output directories
-set_target_properties(poker_engine PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
-    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
 )
 
 # Add compile options if needed
@@ -39,28 +33,8 @@ target_compile_options(poker_engine PRIVATE
     -Wextra
 )
 
-# Install the library and headers
-install(TARGETS poker_engine
-    EXPORT poker-engine-targets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
-)
-
-install(DIRECTORY include/
-    DESTINATION include
-    FILES_MATCHING PATTERN "*.hpp"
-)
-
-# Export targets
-install(EXPORT poker-engine-targets
-    FILE poker-engine-targets.cmake
-    NAMESPACE poker::
-    DESTINATION lib/cmake/poker_engine
-)
-
-# Install the config file
-install(FILES poker-engine-config.cmake
-    DESTINATION lib/cmake/poker_engine
+set_target_properties(poker_engine PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
