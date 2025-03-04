@@ -1,6 +1,4 @@
-#include "game.hpp"
-#include "player.hpp"
-#include "card.hpp"
+#include "engine.hpp"
 #include <memory>
 #include <iostream>
 
@@ -33,31 +31,10 @@ int main() {
         }
 
         // Play some hands
-        for (int i = 0; i < 10; i++) {
-            std::cout << "\nPlaying hand " << i + 1 << std::endl;
-            
-            game.startHand();
-            
-            while (!game.isHandComplete()) {
-                // Instead of processNextAction, use takeAction
-                ActionType action = game.getPhase() == HandPhase::PREFLOP ? ActionType::CALL : ActionType::CHECK;
-                int amount = 0;
-                game.takeAction(action, amount);
-                
-                // You can get game state
-                const auto& board = game.getBoard();
-                const auto& players = game.getPlayers();
-                const auto& pots = game.getPots();
-                
-                // Print current state if desired
-                std::cout << "Board: ";
-                for (const auto& card : board) {
-                    std::cout << card.toString() << " ";
-                }
-                std::cout << std::endl;
-            }
-        }
-        
+        game.startHand();
+        game.printState(); 
+        game.takeAction(ActionType::CALL);
+        game.printState();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
