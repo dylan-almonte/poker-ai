@@ -8,7 +8,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/extern/libtorch/lib
 cp extern/libtorch/include/torch/csrc/python_headers.h extern/libtorch/include/torch/csrc/python_headers.h.bak
 
 # Edit the file to comment out the Python.h include
-sed -i.bak 's/#include <Python.h>/\/\/ #include <Python.h>/' extern/libtorch/include/torch/csrc/python_headers.h
+# sed -i.bak 's/#include <Python.h>/\/\/ #include <Python.h>/' extern/libtorch/include/torch/csrc/python_headers.h
 export TORCH_ROOT=$(pwd)/extern/libtorch
 
 # Clean build directory

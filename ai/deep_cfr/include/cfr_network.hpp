@@ -1,6 +1,5 @@
 #pragma once
-#include "mytorch/tensor.hpp"
-#include "mytorch/nn.hpp"
+#include <torch/torch.h>
 #include <vector>
 #include <string>
 #include <memory>
@@ -15,8 +14,9 @@ public:
     void load(const std::string& path);
 
 private:
-    std::shared_ptr<mytorch::nn::Sequential> model;
+    torch::nn::Sequential model{ nullptr };
     int num_actions;
+    torch::optim::Adam* optimizer;
 
     // Helper method to parse features from info state string
     std::vector<float> parseFeatures(const std::string& info_state);

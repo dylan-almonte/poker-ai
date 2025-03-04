@@ -4,79 +4,78 @@
 
 CFRNet::CFRNet(int input_size, int num_actions) : num_actions(num_actions) {
     // Create a simple feedforward network
-    model = std::make_shared<mytorch::nn::Sequential>();
+    model = torch::nn::Sequential(
+        torch::nn::Linear(input_size, 128),
+        torch::nn::ReLU(),
+        torch::nn::Linear(128, 64),
+        torch::nn::ReLU(),
+        torch::nn::Linear(64, num_actions)
+    );
 
-    // Add layers
-    model->add_module(std::make_shared<mytorch::Linear>(input_size, 128));
-    model->add_module(std::make_shared<mytorch::nn::ReLU>());
-    model->add_module(std::make_shared<mytorch::Linear>(128, 64));
-    model->add_module(std::make_shared<mytorch::nn::ReLU>());
-    model->add_module(std::make_shared<mytorch::Linear>(64, num_actions));
+    // Create optimizer
+    optimizer = new torch::optim::Adam(model->parameters(), 0.001);
 }
 
 std::vector<float> CFRNet::predict(const std::vector<float>& features) {
     // Convert input to tensor
-    mytorch::Tensor input(features, { 1, static_cast<size_t>(features.size()) });
+    torch::Tensor input = torch::tensor(features).reshape({ 1, -1 });
 
-    // Forward pass
-    mytorch::Tensor output = model->forward(input);
+    // Set to evaluation mode
+    model->eval();
+
+    // Forward pass (with no gradient computation)
+    torch::NoGradGuard no_grad;
+    torch::Tensor output = model->forward(input);
 
     // Convert output to vector
-    return output.to_vector();
+    std::vector<float> result(output.data_ptr<float>(),
+                            output.data_ptr<float>() + output.numel());
+
+    // Set back to training mode
+    model->train();
+
+    return result;
 }
 
 void CFRNet::train(const std::vector<std::pair<std::string, std::vector<float>>>& batch) {
-    // Create optimizer
-    std::vector<std::reference_wrapper<mytorch::Module>> modules = { *model };
-    mytorch::Adam optimizer(modules, 0.001f);
-
     // Prepare batch data
     std::vector<std::vector<float>> features;
     std::vector<std::vector<float>> targets;
 
     for (const auto& sample : batch) {
-        // Parse features and targets from sample
-        std::vector<float> feature = parseFeatures(sample.first);
-        std::vector<float> target = sample.second;
-
-        features.push_back(feature);
-        targets.push_back(target);
+        features.push_back(parseFeatures(sample.first));
+        targets.push_back(sample.second);
     }
+
+    // Convert to tensors
+    torch::Tensor x = torch::from_blob(features.data(), { static_cast<long>(features.size()),
+                                      static_cast<long>(features[0].size()) });
+    torch::Tensor y = torch::from_blob(targets.data(), { static_cast<long>(targets.size()),
+                                      static_cast<long>(targets[0].size()) });
 
     // Training loop
     for (int epoch = 0; epoch < 10; epoch++) {
-        float total_loss = 0.0f;
+        // Forward pass
+        torch::Tensor output = model->forward(x);
 
-        for (size_t i = 0; i < features.size(); ++i) {
-            // Convert to tensors
-            mytorch::Tensor x(features[i], { 1, features[i].size() });
-            mytorch::Tensor y(targets[i], { 1, targets[i].size() });
+        // Compute MSE loss
+        torch::Tensor loss = torch::mse_loss(output, y);
 
-            // Forward pass
-            mytorch::Tensor output = model->forward(x);
+        // Backward pass
+        optimizer->zero_grad();
+        loss.backward();
+        optimizer->step();
 
-            // Compute loss (MSE)
-            mytorch::Tensor loss = mytorch::Tensor::mse_loss(output, y);
-            total_loss += loss.item();
-
-            // Backward pass
-            optimizer.zero_grad();
-            loss.backward();
-            optimizer.step();
-        }
-
-        std::cout << "Epoch " << epoch << ", Loss: " << total_loss / features.size() << std::endl;
+        std::cout << "Epoch " << epoch << ", Loss: " << loss.item<float>() << std::endl;
     }
 }
 
 void CFRNet::save(const std::string& path) {
-    // In a real implementation, this would serialize the model parameters
-    std::cout << "Model saved to " << path << " (not implemented)" << std::endl;
+    torch::save(model, path);
 }
 
 void CFRNet::load(const std::string& path) {
-    // In a real implementation, this would deserialize the model parameters
-    std::cout << "Model loaded from " << path << " (not implemented)" << std::endl;
+    torch::load(model, path);
 }
 
 std::vector<float> CFRNet::parseFeatures(const std::string& info_state) {

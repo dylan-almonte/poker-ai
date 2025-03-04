@@ -54,7 +54,7 @@ void LookupTable::_flushes() {
     std::vector<int> flushes;
     auto gen = _get_lexographically_next_bit_sequence(0b11111);
 
-    for (int i = 0; i < 1277 + straight_flushes.size() - 1; i++) {
+    for (size_t i = 0; i < 1277 + straight_flushes.size() - 1; i++) {
         int flush = gen[i];
         
         bool not_sf = true;

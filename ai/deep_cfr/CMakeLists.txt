@@ -5,6 +5,9 @@ project(DeepCFR)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Find Torch package
+find_package(Torch REQUIRED)
+
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -19,7 +22,6 @@ set(SOURCES
     src/deep_cfr.cpp
     src/cfr_network.cpp
     src/memory_buffer.cpp
-    src/mytorch/tensor.cpp
 )
 
 # Create library
@@ -27,6 +29,7 @@ add_library(deep_cfr STATIC ${SOURCES})
 
 # Link against engine
 target_link_libraries(deep_cfr PRIVATE
+    ${TORCH_LIBRARIES}
     poker_engine
 )
 
