@@ -1,58 +1,51 @@
 cmake_minimum_required(VERSION 3.10)
-project(DeepCFR)
+project(deep_cfr)
 
-# Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find Torch package
+# Find LibTorch package
 find_package(Torch REQUIRED)
 
-# Include directories
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/engine/include
-)
-
-# Add required headers
-add_definitions(-include random)  # Include the random header for std::mt19937
-
-# Source files
+# Collect all source files
 set(SOURCES
     src/deep_cfr.cpp
-    src/cfr_network.cpp
-    src/memory_buffer.cpp
+    src/info_state.cpp
+    src/neural_net.cpp
 )
 
-# Create library
-add_library(deep_cfr STATIC ${SOURCES})
+# Create the library
+add_library(deep_cfr SHARED ${SOURCES})
 
-# Link against engine
-target_link_libraries(deep_cfr PRIVATE
-    ${TORCH_LIBRARIES}
-    poker_engine
+# Set include directories for the library
+target_include_directories(deep_cfr 
+    PUBLIC 
+        # This makes the include path available to any target that links deep_cfr
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
 
-# Set compiler flags
-if(MSVC)
-    target_compile_options(deep_cfr PRIVATE /W4)
-else()
-    target_compile_options(deep_cfr PRIVATE -Wall -Wextra -Wpedantic)
-endif()
-
-# Installation rules
-install(TARGETS deep_cfr
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+# Link against LibTorch and poker_engine
+target_link_libraries(deep_cfr 
+    PUBLIC 
+        ${TORCH_LIBRARIES}
+        poker_engine
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-    DESTINATION include/deep_cfr
-    FILES_MATCHING PATTERN "*.hpp"
+# Add compile options if needed
+target_compile_options(deep_cfr PRIVATE
+    -Wall
+    -Wextra
 )
 
-# Optional: Add tests directory
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
+# Set output directories
+set_target_properties(deep_cfr PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+)
+
+# Add compile definitions for LibTorch
+target_compile_definitions(deep_cfr PRIVATE
+    TORCH_API_INCLUDE_EXTENSION_H
+) 
