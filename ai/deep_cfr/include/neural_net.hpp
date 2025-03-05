@@ -5,6 +5,11 @@
 #include <memory>
 #include <torch/torch.h>
 
+// Check for Apple Silicon and MPS support
+#if defined(__APPLE__) && defined(__arm64__)
+#define APPLE_SILICON 1
+#endif
+
 // Simple MLP network for Deep CFR
 class MLPImpl : public torch::nn::Module {
 public:

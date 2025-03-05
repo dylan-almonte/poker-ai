@@ -79,7 +79,7 @@ std::vector<float> InfoState::toFeatureVector() const {
     }
     
     // Encode board cards
-    for (int i = 0; i < 5; i++) {  // Max 5 board cards
+    for (size_t i = 0; i < 5; i++) {  // Max 5 board cards
         if (i < board_cards.size()) {
             const auto& card = board_cards[i];
             

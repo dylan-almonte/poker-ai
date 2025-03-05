@@ -11,13 +11,13 @@
 
 class DeepCFR {
 private:
-    // Neural networks for advantage estimation
+    // Neural networks for advantage estimation (one per player)
     std::vector<std::shared_ptr<NeuralNet>> advantage_nets;
     
     // Neural network for the average policy
     std::shared_ptr<NeuralNet> strategy_net;
     
-    // Reservoir buffers for advantage training
+    // Reservoir buffers for advantage training (one per player)
     std::vector<ReservoirBuffer<AdvantageMemory>> advantage_buffers;
     
     // Reservoir buffer for strategy training
@@ -27,29 +27,24 @@ private:
     std::mt19937 rng;
     
     // Parameters
-    int num_traversals;
     int num_players;
-    float cfr_lr;
-    float cfr_batch_size;
-    float strategy_lr;
-    float strategy_batch_size;
+    int num_traversals;
+    float alpha; // Linear weighting of iterations (typically 2.0)
+    std::vector<float> iteration_weights;
     
     // Helper methods
-    float traverseCFR(const Game& state, int player_id, int iteration);
+    float traverseCFR(Game& state, int traversing_player, int iteration, float reach_prob);
     std::vector<float> computeStrategy(const InfoState& info_state, int player_id);
-    void updateAdvantageNet(int player_id);
-    void updateStrategyNet();
+    void updateAdvantageNet(int player_id, int batch_size);
+    void updateStrategyNet(int batch_size);
 
 public:
     DeepCFR(int num_players, 
             int num_traversals = 1000,
-            float cfr_lr = 0.001,
-            float cfr_batch_size = 128,
-            float strategy_lr = 0.001,
-            float strategy_batch_size = 128);
+            float alpha = 2.0);
     
     // Train the Deep CFR agent
-    void train(int iterations);
+    void train(int iterations, int advantage_batch_size = 128, int strategy_batch_size = 128);
     
     // Get action probabilities for a given info state
     std::vector<float> getActionProbabilities(const InfoState& info_state);

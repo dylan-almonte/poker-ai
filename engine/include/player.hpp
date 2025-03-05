@@ -13,6 +13,7 @@ private:
     PlayerState state;
     int last_pot;
     std::vector<Card> hand;
+    int initial_stack;
 
 public:
     Player(int id, const std::string& name, int chips)
@@ -39,4 +40,12 @@ public:
     bool isActive() const { return state == PlayerState::IN || state == PlayerState::TO_CALL; }
     bool isAllIn() const { return state == PlayerState::ALL_IN; }
     bool hasFolded() const { return state == PlayerState::OUT; }
+
+    void setInitialStack(int stack) { initial_stack = stack; }
+    int getInitialStack() const { return initial_stack; }
+
+    // Set the player's ID (used when adding to a game)
+    void setId(int new_id) {
+        id = new_id;
+    }
 }; 

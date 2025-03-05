@@ -2,30 +2,31 @@
 
 #include <vector>
 #include <random>
+#include <numeric>
 #include "info_state.hpp"
 
 // Memory structure for advantage updates
 struct AdvantageMemory {
     InfoState info_state;
     std::vector<float> advantages;
-    int iteration;
+    float reach_prob;
     
     AdvantageMemory(const InfoState& info_state, 
                     const std::vector<float>& advantages,
-                    int iteration)
-        : info_state(info_state), advantages(advantages), iteration(iteration) {}
+                    float reach_prob)
+        : info_state(info_state), advantages(advantages), reach_prob(reach_prob) {}
 };
 
 // Memory structure for strategy updates
 struct StrategyMemory {
     InfoState info_state;
     std::vector<float> strategy;
-    int iteration;
+    float weight;
     
     StrategyMemory(const InfoState& info_state,
                    const std::vector<float>& strategy,
-                   int iteration)
-        : info_state(info_state), strategy(strategy), iteration(iteration) {}
+                   float weight)
+        : info_state(info_state), strategy(strategy), weight(weight) {}
 };
 
 // Reservoir sampling buffer for Deep CFR
@@ -35,7 +36,7 @@ private:
     std::vector<T> buffer;
     size_t capacity;
     size_t count;
-    std::mt19937 rng;
+    mutable std::mt19937 rng; // Make mutable to allow modification in const methods
     
 public:
     ReservoirBuffer(size_t capacity) 
@@ -60,12 +61,16 @@ public:
         std::vector<T> batch;
         if (buffer.empty()) return batch;
         
-        batch_size = std::min(batch_size, buffer.size());
+        size_t actual_batch_size = std::min(batch_size, buffer.size());
         std::vector<size_t> indices(buffer.size());
         std::iota(indices.begin(), indices.end(), 0);
-        std::shuffle(indices.begin(), indices.end(), rng);
         
-        for (size_t i = 0; i < batch_size; i++) {
+        // Use a non-const copy of the RNG for shuffling
+        auto rng_copy = rng;
+        std::shuffle(indices.begin(), indices.end(), rng_copy);
+        
+        batch.reserve(actual_batch_size);
+        for (size_t i = 0; i < actual_batch_size; i++) {
             batch.push_back(buffer[indices[i]]);
         }
         

@@ -28,6 +28,7 @@ void Game::startHand() {
         player->clearHand();
         player->setState(PlayerState::IN);
         player->setLastPot(0);
+        player->setInitialStack(player->getChips());
     }
     
     // Clear and create new pot
@@ -257,6 +258,16 @@ void Game::settleHand() {
         }
     }
 }
+float Game::getPayoff(int player_idx) const {
+    // Get the player's initial stack at the start of the hand
+    int initial_stack = players[player_idx]->getInitialStack();
+    
+    // Get their current stack
+    int current_stack = players[player_idx]->getChips();
+    
+    // The payoff is the difference (positive if they won money, negative if they lost)
+    return static_cast<float>(current_stack - initial_stack);
+}
 
 void Game::printState() const {
     std::cout << "\n=== Game State ===\n";
@@ -305,3 +316,12 @@ void Game::printState() const {
     }
     std::cout << "\n";
 } 
+
+int Game::getInitialStackTotal() const {
+    int total = 0;
+    for (const auto& player : players) {
+        total += player->getInitialStack();
+    }
+    return total;
+}
+
