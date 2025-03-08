@@ -5,11 +5,11 @@
 #include <filesystem>
 
 DeepCFR::DeepCFR(int num_players, int num_traversals, float alpha)
-    : strategy_buffer(1000000),
-    rng(std::random_device{}()),
-    num_players(num_players),
-    num_traversals(num_traversals),
-    alpha(alpha) { // Initialize strategy_buffer with capacity
+    : strategy_buffer_(1000000),
+    rng_(std::random_device{}()),
+    num_players_(num_players),
+    num_traversals_(num_traversals),
+    alpha_(alpha) { // Initialize strategy_buffer with capacity
 
     // Initialize neural networks
     const int input_size = 500;  // Size of the feature vector for poker states
@@ -17,44 +17,44 @@ DeepCFR::DeepCFR(int num_players, int num_traversals, float alpha)
     const int output_size = 5;   // Number of possible actions in poker
 
     // Create advantage networks for each player
-    for (int i = 0; i < num_players; i++) {
-        advantage_nets.push_back(std::make_shared<NeuralNet>(
+    for (int i = 0; i < num_players_; i++) {
+        advantage_nets_.push_back(std::make_shared<NeuralNet>(
             input_size, hidden_size, output_size, 0.001)); // Learning rate 0.001
     }
 
     // Create strategy network
-    strategy_net = std::make_shared<NeuralNet>(
+    strategy_net_ = std::make_shared<NeuralNet>(
         input_size, hidden_size, output_size, 0.001); // Learning rate 0.001
 
     // Initialize reservoir buffers
     const int buffer_size = 1000000;  // 1M samples as in the paper
-    for (int i = 0; i < num_players; i++) {
-        advantage_buffers.push_back(ReservoirBuffer<AdvantageMemory>(buffer_size));
+    for (int i = 0; i < num_players_; i++) {
+        advantage_buffers_.push_back(ReservoirBuffer<AdvantageMemory>(buffer_size));
     }
 }
 
 void DeepCFR::train(int iterations, int advantage_batch_size, int strategy_batch_size) {
     // Initialize iteration weights
-    iteration_weights.resize(iterations);
+    iteration_weights_.resize(iterations);
     for (int i = 0; i < iterations; i++) {
-        iteration_weights[i] = std::pow(i + 1, alpha);
+        iteration_weights_[i] = std::pow(i + 1, alpha_);
     }
 
     for (int iter = 0; iter < iterations; iter++) {
         std::cout << "Iteration " << iter + 1 << "/" << iterations << std::endl;
 
         // For each player
-        for (int player_id = 0; player_id < num_players; player_id++) {
+        for (int player_id = 0; player_id < num_players_; player_id++) {
             std::cout << "  Traversals for player " << player_id << std::endl;
 
             // Perform CFR traversals
-            for (int t = 0; t < num_traversals; t++) {
+            for (int t = 0; t < num_traversals_; t++) {
                 if (t % 100 == 0) {
-                    std::cout << "    Traversal " << t << "/" << num_traversals << std::endl;
+                    std::cout << "    Traversal " << t << "/" << num_traversals_ << std::endl;
                 }
 
                 // Create a new game instance
-                Game game(num_players, 1000, 10, 20);  // 6 players, 1000 chips, 10/20 blinds
+                Game game(num_players_, 1000, 10, 20);  // 6 players, 1000 chips, 10/20 blinds
                 game.startHand();
 
                 // Perform CFR traversal
@@ -66,13 +66,13 @@ void DeepCFR::train(int iterations, int advantage_batch_size, int strategy_batch
         }
 
         // Collect strategy data
-        for (int t = 0; t < num_traversals; t++) {
+        for (int t = 0; t < num_traversals_; t++) {
             // Create a new game instance
-            Game game(num_players, 1000, 10, 20);
+            Game game(num_players_, 1000, 10, 20);
             game.startHand();
 
             // Random player for this traversal
-            int player_id = std::uniform_int_distribution<>(0, num_players - 1)(rng);
+            int player_id = std::uniform_int_distribution<>(0, num_players_ - 1)(rng_);
             traverseCFR(game, player_id, iter, 1.0);
         }
 
@@ -108,7 +108,7 @@ float DeepCFR::traverseCFR(Game& game, int traversing_player, int iteration, flo
         std::vector<float> strategy = computeStrategy(info_state, current_player);
 
         // Sample an action according to the strategy
-        float r = std::uniform_real_distribution<float>(0, 1)(rng);
+        float r = std::uniform_real_distribution<float>(0, 1)(rng_);
         float cumulative_prob = 0.0f;
         Action chosen_action = legal_actions[0];
 
@@ -137,7 +137,7 @@ float DeepCFR::traverseCFR(Game& game, int traversing_player, int iteration, flo
     std::vector<float> strategy = computeStrategy(info_state, traversing_player);
 
     // Record the strategy in the strategy buffer with iteration weight
-    strategy_buffer.add(StrategyMemory(info_state, strategy, iteration_weights[iteration]));
+    strategy_buffer_.add(StrategyMemory(info_state, strategy, iteration_weights_[iteration]));
 
     // Compute counterfactual values for each action
     float cf_value_sum = 0.0f;
@@ -155,7 +155,7 @@ float DeepCFR::traverseCFR(Game& game, int traversing_player, int iteration, flo
     }
 
     // Add to advantage buffer with reach probability as weight
-    advantage_buffers[traversing_player].add(AdvantageMemory(info_state, regrets, reach_prob));
+    advantage_buffers_[traversing_player].add(AdvantageMemory(info_state, regrets, reach_prob));
 
     return cf_value_sum;
 }
@@ -165,7 +165,7 @@ std::vector<float> DeepCFR::computeStrategy(const InfoState& info_state, int pla
     std::vector<float> features = info_state.toFeatureVector();
 
     // Get advantages from advantage network
-    std::vector<float> advantages = advantage_nets[player_id]->predict(features);
+    std::vector<float> advantages = advantage_nets_[player_id]->predict(features);
     std::vector<Action> legal_actions = info_state.getLegalActions();
 
     // Convert advantages to strategy using regret matching
@@ -193,7 +193,7 @@ std::vector<float> DeepCFR::computeStrategy(const InfoState& info_state, int pla
 }
 
 void DeepCFR::updateAdvantageNet(int player_id, int batch_size) {
-    if (advantage_buffers[player_id].size() < static_cast<size_t>(batch_size)) {
+    if (advantage_buffers_[player_id].size() < static_cast<size_t>(batch_size)) {
         std::cout << "Not enough samples to train advantage net for player " << player_id << std::endl;
         return;
     }
@@ -201,7 +201,7 @@ void DeepCFR::updateAdvantageNet(int player_id, int batch_size) {
     std::cout << "Training advantage network for player " << player_id << std::endl;
 
     // Sample batch from buffer
-    auto batch = advantage_buffers[player_id].sample(static_cast<size_t>(batch_size));
+    auto batch = advantage_buffers_[player_id].sample(static_cast<size_t>(batch_size));
 
     // Prepare features and targets
     std::vector<std::vector<float>> features_batch;
@@ -213,12 +213,12 @@ void DeepCFR::updateAdvantageNet(int player_id, int batch_size) {
     }
 
     // Train the network
-    float loss = advantage_nets[player_id]->train(features_batch, targets_batch, batch_size);
+    float loss = advantage_nets_[player_id]->train(features_batch, targets_batch, batch_size);
     std::cout << "  Loss: " << loss << std::endl;
 }
 
 void DeepCFR::updateStrategyNet(int batch_size) {
-    if (strategy_buffer.size() < static_cast<size_t>(batch_size)) {
+    if (strategy_buffer_.size() < static_cast<size_t>(batch_size)) {
         std::cout << "Not enough samples to train strategy net" << std::endl;
         return;
     }
@@ -226,7 +226,7 @@ void DeepCFR::updateStrategyNet(int batch_size) {
     std::cout << "Training strategy network" << std::endl;
 
     // Sample batch from buffer
-    auto batch = strategy_buffer.sample(static_cast<size_t>(batch_size));
+    auto batch = strategy_buffer_.sample(static_cast<size_t>(batch_size));
 
     // Prepare features and targets
     std::vector<std::vector<float>> features_batch;
@@ -238,13 +238,13 @@ void DeepCFR::updateStrategyNet(int batch_size) {
     }
 
     // Train the network
-    float loss = strategy_net->train(features_batch, targets_batch, batch_size);
+    float loss = strategy_net_->train(features_batch, targets_batch, batch_size);
     std::cout << "  Loss: " << loss << std::endl;
 }
 
 std::vector<float> DeepCFR::getActionProbabilities(const InfoState& info_state) {
     // Use the strategy network to get action probabilities
-    return strategy_net->predict(info_state.toFeatureVector());
+    return strategy_net_->predict(info_state.toFeatureVector());
 }
 
 void DeepCFR::saveModels(const std::string& path) {
@@ -252,20 +252,20 @@ void DeepCFR::saveModels(const std::string& path) {
     std::filesystem::create_directories(path);
 
     // Save advantage networks
-    for (int i = 0; i < num_players; i++) {
-        advantage_nets[i]->save(path + "/advantage_net_" + std::to_string(i) + ".pt");
+    for (int i = 0; i < num_players_; i++) {
+        advantage_nets_[i]->save(path + "/advantage_net_" + std::to_string(i) + ".pt");
     }
 
     // Save strategy network
-    strategy_net->save(path + "/strategy_net.pt");
+    strategy_net_->save(path + "/strategy_net.pt");
 }
 
 void DeepCFR::loadModels(const std::string& path) {
     // Load advantage networks
-    for (int i = 0; i < num_players; i++) {
-        advantage_nets[i]->load(path + "/advantage_net_" + std::to_string(i) + ".pt");
+    for (int i = 0; i < num_players_; i++) {
+        advantage_nets_[i]->load(path + "/advantage_net_" + std::to_string(i) + ".pt");
     }
 
     // Load strategy network
-    strategy_net->load(path + "/strategy_net.pt");
+    strategy_net_->load(path + "/strategy_net.pt");
 }

@@ -12,25 +12,25 @@
 class DeepCFR {
 private:
     // Neural networks for advantage estimation (one per player)
-    std::vector<std::shared_ptr<NeuralNet>> advantage_nets;
+    std::vector<std::shared_ptr<NeuralNet>> advantage_nets_;
     
     // Neural network for the average policy
-    std::shared_ptr<NeuralNet> strategy_net;
+    std::shared_ptr<NeuralNet> strategy_net_;
     
     // Reservoir buffers for advantage training (one per player)
-    std::vector<ReservoirBuffer<AdvantageMemory>> advantage_buffers;
+    std::vector<ReservoirBuffer<AdvantageMemory>> advantage_buffers_;
     
     // Reservoir buffer for strategy training
-    ReservoirBuffer<StrategyMemory> strategy_buffer;
+    ReservoirBuffer<StrategyMemory> strategy_buffer_;
     
     // Random number generator
-    std::mt19937 rng;
+    std::mt19937 rng_;
     
     // Parameters
-    int num_players;
-    int num_traversals;
-    float alpha; // Linear weighting of iterations (typically 2.0)
-    std::vector<float> iteration_weights;
+    int num_players_;
+    int num_traversals_;
+    float alpha_; // Linear weighting of iterations (typically 2.0)
+    std::vector<float> iteration_weights_;
     
     // Helper methods
     float traverseCFR(Game& state, int traversing_player, int iteration, float reach_prob);
