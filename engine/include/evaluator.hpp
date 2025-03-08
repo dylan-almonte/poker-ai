@@ -18,8 +18,8 @@ public:
     static const std::unordered_map<int, int> MAX_TO_RANK_CLASS;
     static const std::unordered_map<int, std::string> RANK_CLASS_TO_STRING;
 
-    std::unordered_map<int, int> flush_lookup;
-    std::unordered_map<int, int> unsuited_lookup;
+    std::unordered_map<int, int> flush_lookup_;
+    std::unordered_map<int, int> unsuited_lookup_  ;
 
     LookupTable();
 

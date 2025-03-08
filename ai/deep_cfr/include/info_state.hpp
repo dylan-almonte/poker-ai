@@ -4,17 +4,21 @@
 #include <string>
 #include "engine.hpp"
 
+
+
 // Class to represent an information state in poker
 class InfoState {
 private:
-    int player_id;
-    std::vector<Card> hole_cards;
-    std::vector<Card> board_cards;
-    HandPhase::Phase phase;
-    std::vector<int> pot_sizes;
-    std::vector<int> player_stacks;
-    std::vector<PlayerState> player_states;
-    std::vector<std::pair<int, ActionType>> action_history;
+    int player_id_;
+    std::vector<Card> hole_cards_;
+    std::vector<Card> board_cards_;
+    HandPhase::Phase phase_;
+    std::vector<int> pot_sizes_;
+    std::vector<int> player_stacks_;
+    std::vector<PlayerState> player_states_;
+    std::vector<std::pair<int, ActionType>> action_history_;
+
+    const int MAX_FEATURE_SIZE = 500;
     
 public:
     InfoState(int player_id, 
@@ -36,14 +40,15 @@ public:
     int getNumActions() const;
     
     // Get the legal actions in this state
-    std::vector<ActionType> getLegalActions() const;
+    std::vector<Action> getLegalActions() const;
     
     // Get a string representation of the info state (for debugging)
     std::string toString() const;
     
     // Getters
-    int getPlayerId() const { return player_id; }
-    const std::vector<Card>& getHoleCards() const { return hole_cards; }
-    const std::vector<Card>& getBoardCards() const { return board_cards; }
-    HandPhase::Phase getPhase() const { return phase; }
+    int getPlayerId() const { return player_id_; }
+    const std::vector<Card>& getHoleCards() const { return hole_cards_; }
+    const std::vector<Card>& getBoardCards() const { return board_cards_; }
+    HandPhase::Phase getPhase() const { return phase_; }
 }; 
+

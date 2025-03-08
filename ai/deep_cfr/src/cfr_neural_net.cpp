@@ -1,4 +1,4 @@
-#include "neural_net.hpp"
+#include "cfr_neural_net.hpp"
 #include <iostream>
 
 MLPImpl::MLPImpl(int input_size, int hidden_size, int output_size) {

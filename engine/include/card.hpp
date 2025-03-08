@@ -6,7 +6,7 @@
 
 class Card {
 private:
-    int card_int;
+    int card_int_;
     static const std::string INT_SUIT_TO_CHAR_SUIT;
     static const std::unordered_map<int, std::string> PRETTY_SUITS;
 
@@ -29,7 +29,7 @@ public:
     int getSuit() const;
     int getBitRank() const;
     int getPrime() const;
-    int toInt() const { return card_int; }
+    int toInt() const { return card_int_; }
 
     // String representations
     std::string toString() const;
@@ -37,7 +37,7 @@ public:
     std::string binaryString() const;
 
     // Operator overloads
-    bool operator==(const Card& other) const { return card_int == other.card_int; }
+    bool operator==(const Card& other) const { return card_int_ == other.card_int_; }
     bool operator!=(const Card& other) const { return !(*this == other); }
 };
 

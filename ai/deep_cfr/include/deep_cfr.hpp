@@ -5,7 +5,7 @@
 #include <random>
 #include <unordered_map>
 #include "engine.hpp"
-#include "neural_net.hpp"
+#include "cfr_neural_net.hpp"
 #include "reservoir_buffer.hpp"
 #include "info_state.hpp"
 

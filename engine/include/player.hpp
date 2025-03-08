@@ -7,45 +7,45 @@
 
 class Player {
 private:
-    int id;
-    std::string name;
-    int chips;
-    PlayerState state;
-    int last_pot;
-    std::vector<Card> hand;
-    int initial_stack;
+    int id_;
+    std::string name_;
+    int chips_;
+    PlayerState state_;
+    int last_pot_;
+    std::vector<Card> hand_;
+    int initial_stack_;
 
 public:
     Player(int id, const std::string& name, int chips)
-        : id(id), name(name), chips(chips), state(PlayerState::IN), last_pot(0) {}
+        : id_(id), name_(name), chips_(chips), state_(PlayerState::IN), last_pot_(0) {}
 
     // Getters
-    int getId() const { return id; }
-    const std::string& getName() const { return name; }
-    int getChips() const { return chips; }
-    PlayerState getState() const { return state; }
-    int getLastPot() const { return last_pot; }
-    const std::vector<Card>& getHand() const { return hand; }
+    int getId() const { return id_; }
+    const std::string& getName() const { return name_; }
+    int getChips() const { return chips_; }
+    PlayerState getState() const { return state_; }
+    int getLastPot() const { return last_pot_; }
+    const std::vector<Card>& getHand() const { return hand_; }
 
     // Setters
-    void setChips(int amount) { chips = amount; }
-    void setState(PlayerState new_state) { state = new_state; }
-    void setLastPot(int pot) { last_pot = pot; }
+    void setChips(int amount) { chips_ = amount; }
+    void setState(PlayerState new_state) { state_ = new_state; }
+    void setLastPot(int pot) { last_pot_ = pot; }
     
     // Hand management
-    void addCard(const Card& card) { hand.push_back(card); }
-    void clearHand() { hand.clear(); }
+    void addCard(const Card& card) { hand_.push_back(card); }
+    void clearHand() { hand_.clear(); }
 
     // State checks
-    bool isActive() const { return state == PlayerState::IN || state == PlayerState::TO_CALL; }
-    bool isAllIn() const { return state == PlayerState::ALL_IN; }
-    bool hasFolded() const { return state == PlayerState::OUT; }
+    bool isActive() const { return state_ == PlayerState::IN || state_ == PlayerState::TO_CALL; }
+    bool isAllIn() const { return state_ == PlayerState::ALL_IN; }
+    bool hasFolded() const { return state_ == PlayerState::OUT; }
 
-    void setInitialStack(int stack) { initial_stack = stack; }
-    int getInitialStack() const { return initial_stack; }
+    void setInitialStack(int stack) { initial_stack_ = stack; }
+    int getInitialStack() const { return initial_stack_; }
 
     // Set the player's ID (used when adding to a game)
     void setId(int new_id) {
-        id = new_id;
+        id_ = new_id;
     }
 }; 

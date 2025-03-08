@@ -5,7 +5,7 @@
 
 class Deck {
 private:
-    std::vector<Card> cards;
+    std::vector<Card> cards_;
     static std::vector<Card> FULL_DECK;
     static std::vector<Card> getFullDeck();
 
@@ -14,5 +14,5 @@ public:
     void shuffle();
     std::vector<Card> draw(size_t num = 1);
     std::string toString() const;
-    size_t size() const { return cards.size(); }
+    size_t size() const { return cards_.size(); }
 }; 

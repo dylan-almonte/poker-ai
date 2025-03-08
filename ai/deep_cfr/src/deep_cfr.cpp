@@ -101,7 +101,7 @@ float DeepCFR::traverseCFR(Game& game, int traversing_player, int iteration, flo
 
     // Create info state for the current player
     InfoState info_state = InfoState::fromGame(game, current_player);
-    std::vector<ActionType> legal_actions = info_state.getLegalActions();
+    std::vector<Action> legal_actions = info_state.getLegalActions();
 
     // If it's not the traversing player's turn, use current strategy to sample an action
     if (current_player != traversing_player) {
@@ -110,7 +110,7 @@ float DeepCFR::traverseCFR(Game& game, int traversing_player, int iteration, flo
         // Sample an action according to the strategy
         float r = std::uniform_real_distribution<float>(0, 1)(rng);
         float cumulative_prob = 0.0f;
-        ActionType chosen_action = legal_actions[0];
+        Action chosen_action = legal_actions[0];
 
         for (size_t i = 0; i < legal_actions.size(); i++) {
             cumulative_prob += strategy[i];
@@ -122,7 +122,11 @@ float DeepCFR::traverseCFR(Game& game, int traversing_player, int iteration, flo
 
         // Apply the chosen action and continue
         Game next_state = game;
-        next_state.takeAction(chosen_action);
+        if (chosen_action.getActionType() == ActionType::RAISE) {
+            next_state.takeAction(chosen_action);
+        } else {
+            next_state.takeAction(chosen_action);
+        }
         return traverseCFR(next_state, traversing_player, iteration, reach_prob);
     }
 
@@ -162,7 +166,7 @@ std::vector<float> DeepCFR::computeStrategy(const InfoState& info_state, int pla
 
     // Get advantages from advantage network
     std::vector<float> advantages = advantage_nets[player_id]->predict(features);
-    std::vector<ActionType> legal_actions = info_state.getLegalActions();
+    std::vector<Action> legal_actions = info_state.getLegalActions();
 
     // Convert advantages to strategy using regret matching
     std::vector<float> strategy(legal_actions.size(), 0.0f);

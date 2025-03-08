@@ -6,44 +6,47 @@
 #include "pot.hpp"
 #include "deck.hpp"
 #include "hand_phase.hpp"
-#include "action_type.hpp"
+#include "action.hpp"
+
+
 
 class Game {
 private:
-    std::vector<std::shared_ptr<Player>> players;
-    std::vector<std::shared_ptr<Pot>> pots;
-    std::vector<Card> board;
-    Deck deck;
+    std::vector<Action> action_history_ ;
+    std::vector<std::shared_ptr<Player>> players_;
+    std::vector<std::shared_ptr<Pot>> pots_;
+    std::vector<Card> board_;
+    Deck deck_;
     
-    int btn_loc;
-    int current_player;
-    HandPhase::Phase phase;
+    int btn_loc_;
+    int current_player_;
+    HandPhase::Phase phase_;
     
-    int small_blind;
-    int big_blind;
+    int small_blind_;
+    int big_blind_;
     
     void dealCards();
     void postBlinds();
     void moveBlinds();
-    // bool isValidAction(ActionType action, int amount) const;
-    void handleAction(ActionType action, int amount);
+    bool isValidAction(Action action) const;
+    void handleAction(Action action);
     void settleHand();
 
+
 public:
-    bool isValidAction(ActionType action, int amount) const;
 
     Game(int num_players, int starting_chips, int small_blind, int big_blind);
     
     void startHand();
-    void takeAction(ActionType action, int amount = 0);
+    void takeAction(Action action);
     bool isHandComplete() const;
     
     // Getters
-    const std::vector<Card>& getBoard() const { return board; }
-    const std::vector<std::shared_ptr<Player>>& getPlayers() const { return players; }
-    const std::vector<std::shared_ptr<Pot>>& getPots() const { return pots; }
-    int getCurrentPlayer() const { return current_player; }
-    HandPhase::Phase getPhase() const { return phase; }
+    const std::vector<Card>& getBoard() const { return board_; }
+    const std::vector<std::shared_ptr<Player>>& getPlayers() const { return players_; }
+    const std::vector<std::shared_ptr<Pot>>& getPots() const { return pots_; }
+    int getCurrentPlayer() const { return current_player_; }
+    HandPhase::Phase getPhase() const { return phase_; }
     
     // Add this new method
     void printState() const;
@@ -55,12 +58,7 @@ public:
     float getPayoff(int player_idx) const;
     int getInitialStackTotal() const;
     
-    // Update a player at a specific position with a new player
-    void updatePlayer(int index, std::shared_ptr<Player> player) {
-        if (index < 0 || index >= static_cast<int>(players.size())) {
-            throw std::out_of_range("Player index out of range");
-        }
-        players[index] = player;
-    }
+    // Get action history
+    const std::vector<Action>& getActionHistory() const { return action_history_; }
     
 }; 

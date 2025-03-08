@@ -76,13 +76,13 @@ void LookupTable::_flushes() {
     int rank = 1;
     for (int straight_flush : straight_flushes) {
         int prime_product = primeProductFromRankbits(straight_flush);
-        flush_lookup[prime_product] = rank++;
+        flush_lookup_[prime_product] = rank++;
     }
 
     rank = MAX_FULL_HOUSE + 1;
     for (int flush : flushes) {
         int prime_product = primeProductFromRankbits(flush);
-        flush_lookup[prime_product] = rank++;
+        flush_lookup_[prime_product] = rank++;
     }
 
     _straight_and_highcards(straight_flushes, flushes);
@@ -92,13 +92,13 @@ void LookupTable::_straight_and_highcards(const std::vector<int>& straights, con
     int rank = MAX_FLUSH + 1;
     for (int straight : straights) {
         int prime_product = primeProductFromRankbits(straight);
-        unsuited_lookup[prime_product] = rank++;
+        unsuited_lookup_[prime_product] = rank++;
     }
 
     rank = MAX_PAIR + 1;
     for (int high : highcards) {
         int prime_product = primeProductFromRankbits(high);
-        unsuited_lookup[prime_product] = rank++;
+        unsuited_lookup_[prime_product] = rank++;
     }
 }
 
@@ -112,7 +112,7 @@ void LookupTable::_multiples() {
         for (int j = 12; j >= 0; j--) {
             if ((kicker_ranks >> j) & 1) {
                 int product = std::pow(Card::PRIMES[i], 4) * Card::PRIMES[j];
-                unsuited_lookup[product] = rank++;
+                unsuited_lookup_[product] = rank++;
             }
         }
     }
@@ -126,7 +126,7 @@ void LookupTable::_multiples() {
         for (int j = 12; j >= 0; j--) {
             if ((pair_ranks >> j) & 1) {
                 int product = std::pow(Card::PRIMES[i], 3) * std::pow(Card::PRIMES[j], 2);
-                unsuited_lookup[product] = rank++;
+                unsuited_lookup_[product] = rank++;
             }
         }
     }
@@ -142,7 +142,7 @@ void LookupTable::_multiples() {
                 for (int k = j - 1; k >= 0; k--) {
                     if ((kicker_ranks >> k) & 1) {
                         int product = std::pow(Card::PRIMES[i], 3) * Card::PRIMES[j] * Card::PRIMES[k];
-                        unsuited_lookup[product] = rank++;
+                        unsuited_lookup_[product] = rank++;
                     }
                 }
             }
@@ -160,7 +160,7 @@ void LookupTable::_multiples() {
             for (int k = 12; k >= 0; k--) {
                 if ((kicker_ranks >> k) & 1) {
                     int product = std::pow(Card::PRIMES[i], 2) * std::pow(Card::PRIMES[j], 2) * Card::PRIMES[k];
-                    unsuited_lookup[product] = rank++;
+                    unsuited_lookup_[product] = rank++;
                 }
             }
         }
@@ -179,7 +179,7 @@ void LookupTable::_multiples() {
                         for (int l = k - 1; l >= 0; l--) {
                             if ((kicker_ranks >> l) & 1) {
                                 int product = std::pow(Card::PRIMES[i], 2) * Card::PRIMES[j] * Card::PRIMES[k] * Card::PRIMES[l];
-                                unsuited_lookup[product] = rank++;
+                                unsuited_lookup_[product] = rank++;
                             }
                         }
                     }
@@ -241,12 +241,12 @@ int Evaluator::_five(const std::vector<Card>& cards) {
         int hand_or = (cards[0].toInt() | cards[1].toInt() | cards[2].toInt() | 
                       cards[3].toInt() | cards[4].toInt()) >> 16;
         int prime = primeProductFromRankbits(hand_or);
-        return lookup_table.flush_lookup[prime];
+        return lookup_table.flush_lookup_[prime];
     }
 
     // Otherwise
     int prime = primeProductFromHand(cards);
-    return lookup_table.unsuited_lookup[prime];
+    return lookup_table.unsuited_lookup_[prime];
 }
 
 int Evaluator::get_rank_class(int hand_rank) {

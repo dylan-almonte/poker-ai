@@ -9,14 +9,14 @@ InfoState::InfoState(int player_id,
                      const std::vector<int>& player_stacks,
                      const std::vector<PlayerState>& player_states,
                      const std::vector<std::pair<int, ActionType>>& action_history)
-    : player_id(player_id),
-      hole_cards(hole_cards),
-      board_cards(board_cards),
-      phase(phase),
-      pot_sizes(pot_sizes),
-      player_stacks(player_stacks),
-      player_states(player_states),
-      action_history(action_history) {}
+    : player_id_(player_id),
+      hole_cards_(hole_cards),
+      board_cards_(board_cards),
+      phase_(phase),
+      pot_sizes_(pot_sizes),
+      player_stacks_(player_stacks),
+      player_states_(player_states),
+      action_history_(action_history) {}
 
 InfoState InfoState::fromGame(const Game& game, int player_id) {
     // Extract player's hole cards
@@ -50,6 +50,7 @@ InfoState InfoState::fromGame(const Game& game, int player_id) {
     // TODO: Extract action history from the game
     // This would require the game to maintain an action history
     std::vector<std::pair<int, ActionType>> action_history;
+
     
     return InfoState(player_id, hole_cards, board_cards, phase, pot_sizes, 
                      player_stacks, player_states, action_history);
@@ -62,11 +63,11 @@ std::vector<float> InfoState::toFeatureVector() const {
     
     // One-hot encode player ID
     for (int i = 0; i < 6; i++) {  // Assuming max 6 players
-        features.push_back(i == player_id ? 1.0f : 0.0f);
+        features.push_back(i == player_id_ ? 1.0f : 0.0f);
     }
     
     // Encode hole cards (one-hot for rank and suit)
-    for (const auto& card : hole_cards) {
+    for (const auto& card : hole_cards_) {
         // One-hot for rank (13 ranks)
         for (int i = 0; i < 13; i++) {
             features.push_back(i == card.getRank() ? 1.0f : 0.0f);
@@ -80,8 +81,8 @@ std::vector<float> InfoState::toFeatureVector() const {
     
     // Encode board cards
     for (size_t i = 0; i < 5; i++) {  // Max 5 board cards
-        if (i < board_cards.size()) {
-            const auto& card = board_cards[i];
+        if (i < board_cards_.size()) {
+            const auto& card = board_cards_[i];
             
             // One-hot for rank
             for (int j = 0; j < 13; j++) {
@@ -100,21 +101,21 @@ std::vector<float> InfoState::toFeatureVector() const {
     
     // Encode phase (one-hot)
     for (int i = 0; i < 6; i++) {  // 6 phases
-        features.push_back(i == static_cast<int>(phase) ? 1.0f : 0.0f);
+        features.push_back(i == static_cast<int>(phase_) ? 1.0f : 0.0f);
     }
     
     // Encode pot sizes (normalized)
-    for (int pot : pot_sizes) {
+    for (int pot : pot_sizes_) {
         features.push_back(static_cast<float>(pot) / 10000.0f);  // Normalize by max pot
     }
     
     // Encode player stacks (normalized)
-    for (int stack : player_stacks) {
+    for (int stack : player_stacks_) {
         features.push_back(static_cast<float>(stack) / 10000.0f);  // Normalize by max stack
     }
     
     // Encode player states (one-hot)
-    for (const auto& state : player_states) {
+    for (const auto& state : player_states_) {
         for (int i = 0; i < 5; i++) {  // 5 player states
             features.push_back(i == static_cast<int>(state) ? 1.0f : 0.0f);
         }
@@ -122,10 +123,10 @@ std::vector<float> InfoState::toFeatureVector() const {
     
     // Encode action history (simplified)
     // In a real implementation, you would want to encode the full action history
-    int num_actions = std::min(10, static_cast<int>(action_history.size()));
+    int num_actions = std::min(10, static_cast<int>(action_history_.size()));
     for (int i = 0; i < num_actions; i++) {
-        int player = action_history[action_history.size() - 1 - i].first;
-        ActionType action = action_history[action_history.size() - 1 - i].second;
+        int player = action_history_[action_history_.size() - 1 - i].first;
+        ActionType action = action_history_[action_history_.size() - 1 - i].second;
         
         // One-hot for player
         for (int j = 0; j < 6; j++) {
@@ -150,23 +151,24 @@ int InfoState::getNumActions() const {
     return getLegalActions().size();
 }
 
-std::vector<ActionType> InfoState::getLegalActions() const {
+std::vector<Action> InfoState::getLegalActions() const {
     // Simplified legal actions based on the game phase
-    std::vector<ActionType> actions;
+    std::vector<Action> actions;
+    std::vector<int32_t> bet_sizes;
     
     // Always include fold (except preflop with no raises)
-    if (phase != HandPhase::Phase::PREFLOP || !action_history.empty()) {
-        actions.push_back(ActionType::FOLD);
+    if (phase_ != HandPhase::Phase::PREFLOP || !action_history_.empty()) {
+        actions.push_back(Action(ActionType::FOLD, 0, 0));
     }
     
     // Check/call
-    actions.push_back(ActionType::CALL);
+    actions.push_back(Action(ActionType::CALL, 0, 0));
     
     // Raise/bet
-    actions.push_back(ActionType::RAISE);
+    actions.push_back(Action(ActionType::RAISE, 0, 0));
     
     // All-in
-    actions.push_back(ActionType::ALL_IN);
+    actions.push_back(Action(ActionType::ALL_IN, 0, 0));
     
     return actions;
 }
@@ -174,41 +176,41 @@ std::vector<ActionType> InfoState::getLegalActions() const {
 std::string InfoState::toString() const {
     std::stringstream ss;
     
-    ss << "Player: " << player_id << std::endl;
-    ss << "Phase: " << phaseToString(phase) << std::endl;
+    ss << "Player: " << player_id_ << std::endl;
+    ss << "Phase: " << phaseToString(phase_) << std::endl;
     
     ss << "Hole cards: ";
-    for (const auto& card : hole_cards) {
+    for (const auto& card : hole_cards_) {
         ss << card.toString() << " ";
     }
     ss << std::endl;
     
     ss << "Board cards: ";
-    for (const auto& card : board_cards) {
+    for (const auto& card : board_cards_) {
         ss << card.toString() << " ";
     }
     ss << std::endl;
     
     ss << "Pot sizes: ";
-    for (int pot : pot_sizes) {
+    for (int pot : pot_sizes_) {
         ss << pot << " ";
     }
     ss << std::endl;
     
     ss << "Player stacks: ";
-    for (int stack : player_stacks) {
+    for (int stack : player_stacks_) {
         ss << stack << " ";
     }
     ss << std::endl;
     
     ss << "Player states: ";
-    for (const auto& state : player_states) {
+    for (const auto& state : player_states_) {
         ss << playerStateToString(state) << " ";
     }
     ss << std::endl;
     
     ss << "Action history: ";
-    for (const auto& [player, action] : action_history) {
+    for (const auto& [player, action] : action_history_) {
         ss << "P" << player << ":" << actionTypeToString(action) << " ";
     }
     ss << std::endl;

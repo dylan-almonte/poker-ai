@@ -6,7 +6,7 @@
 std::vector<Card> Deck::FULL_DECK;
 
 Deck::Deck() {
-    cards = getFullDeck();
+    cards_ = getFullDeck();
     shuffle();
 }
 
@@ -28,22 +28,22 @@ std::vector<Card> Deck::getFullDeck() {
 void Deck::shuffle() {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::shuffle(cards.begin(), cards.end(), gen);
+    std::shuffle(cards_.begin(), cards_.end(), gen);
 }
 
 std::vector<Card> Deck::draw(size_t num) {
-    if (cards.size() < num) {
+    if (cards_.size() < num) {
         throw std::runtime_error(
             "Cannot draw " + std::to_string(num) + 
-            " cards from deck of size " + std::to_string(cards.size())
+            " cards from deck of size " + std::to_string(cards_.size())
         );
     }
 
-    std::vector<Card> drawn_cards(cards.begin(), cards.begin() + num);
-    cards.erase(cards.begin(), cards.begin() + num);
+    std::vector<Card> drawn_cards(cards_.begin(), cards_.begin() + num);
+    cards_.erase(cards_.begin(), cards_.begin() + num);
     return drawn_cards;
 }
 
 std::string Deck::toString() const {
-    return prettyPrintCards(cards);
+    return prettyPrintCards(cards_);
 } 

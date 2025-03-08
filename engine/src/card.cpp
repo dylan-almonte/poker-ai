@@ -27,9 +27,9 @@ const std::unordered_map<int, std::string> Card::PRETTY_SUITS = {
     {8, "♣"}  // clubs
 };
 
-Card::Card(const std::string& card_string) : card_int(fromString(card_string).toInt()) {}
+Card::Card(const std::string& card_string) : card_int_(fromString(card_string).toInt()) {}
 
-Card::Card(int card_int) : card_int(card_int) {}
+Card::Card(int card_int) : card_int_(card_int) {}
 
 Card Card::fromString(const std::string& card_string) {
     char rank_char = card_string[0];
@@ -51,19 +51,19 @@ Card Card::fromInt(int card_int) {
 }
 
 int Card::getRank() const {
-    return (card_int >> 8) & 0xF;
+    return (card_int_ >> 8) & 0xF;
 }
 
 int Card::getSuit() const {
-    return (card_int >> 12) & 0xF;
+    return (card_int_ >> 12) & 0xF;
 }
 
 int Card::getBitRank() const {
-    return (card_int >> 16) & 0x1FFF;
+    return (card_int_ >> 16) & 0x1FFF;
 }
 
 int Card::getPrime() const {
-    return card_int & 0x3F;
+    return card_int_ & 0x3F;
 }
 
 std::string Card::toString() const {
@@ -79,7 +79,7 @@ std::string Card::prettyString() const {
 }
 
 std::string Card::binaryString() const {
-    std::bitset<32> bits(card_int);
+    std::bitset<32> bits(card_int_);
     std::string bstr = bits.to_string();
     std::string result;
     
