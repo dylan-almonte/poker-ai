@@ -8,7 +8,8 @@ InfoState::InfoState(int player_id,
                      const std::vector<int>& pot_sizes,
                      const std::vector<int>& player_stacks,
                      const std::vector<PlayerState>& player_states,
-                     const std::vector<std::pair<int, ActionType>>& action_history)
+                     const std::vector<Action>& action_history,
+                     float total_pot_size)
     : player_id_(player_id),
       hole_cards_(hole_cards),
       board_cards_(board_cards),
@@ -16,7 +17,8 @@ InfoState::InfoState(int player_id,
       pot_sizes_(pot_sizes),
       player_stacks_(player_stacks),
       player_states_(player_states),
-      action_history_(action_history) {}
+      action_history_(action_history),
+      total_pot_size_(total_pot_size) {}
 
 InfoState InfoState::fromGame(const Game& game, int player_id) {
     // Extract player's hole cards
@@ -31,8 +33,11 @@ InfoState InfoState::fromGame(const Game& game, int player_id) {
     
     // Extract pot sizes
     std::vector<int> pot_sizes;
+    int total_pot_size = 0;
     for (const auto& pot : game.getPots()) {
-        pot_sizes.push_back(pot->get_total_amount());
+        int amt = pot->get_amount();
+        pot_sizes.push_back(amt);
+        total_pot_size += amt;
     }
     
     // Extract player stacks
@@ -49,11 +54,10 @@ InfoState InfoState::fromGame(const Game& game, int player_id) {
     
     // TODO: Extract action history from the game
     // This would require the game to maintain an action history
-    std::vector<std::pair<int, ActionType>> action_history;
-
+    std::vector<Action> action_history = game.getActionHistory();
     
     return InfoState(player_id, hole_cards, board_cards, phase, pot_sizes, 
-                     player_stacks, player_states, action_history);
+                     player_stacks, player_states, action_history, total_pot_size);
 }
 
 std::vector<float> InfoState::toFeatureVector() const {
@@ -106,13 +110,13 @@ std::vector<float> InfoState::toFeatureVector() const {
     
     // Encode pot sizes (normalized)
     for (int pot : pot_sizes_) {
-        features.push_back(static_cast<float>(pot) / 10000.0f);  // Normalize by max pot
+        features.push_back(static_cast<float>(pot) / total_pot_size_);  // Normalize by max pot
     }
     
     // Encode player stacks (normalized)
-    for (int stack : player_stacks_) {
-        features.push_back(static_cast<float>(stack) / 10000.0f);  // Normalize by max stack
-    }
+    // for (int stack : player_stacks_) {
+    //     features.push_back(static_cast<float>(stack) / 10000.0f);  // Normalize by max stack
+    // }
     
     // Encode player states (one-hot)
     for (const auto& state : player_states_) {
@@ -120,16 +124,18 @@ std::vector<float> InfoState::toFeatureVector() const {
             features.push_back(i == static_cast<int>(state) ? 1.0f : 0.0f);
         }
     }
+    int num_players = player_states_.size();
     
     // Encode action history (simplified)
     // In a real implementation, you would want to encode the full action history
+    // TODO: change history lookback
     int num_actions = std::min(10, static_cast<int>(action_history_.size()));
     for (int i = 0; i < num_actions; i++) {
-        int player = action_history_[action_history_.size() - 1 - i].first;
-        ActionType action = action_history_[action_history_.size() - 1 - i].second;
+        int player = action_history_[action_history_.size() - 1 - i].getPlayerId();
+        ActionType action = action_history_[action_history_.size() - 1 - i].getActionType();
         
         // One-hot for player
-        for (int j = 0; j < 6; j++) {
+        for (int j = 0; j < num_players; j++) {
             features.push_back(j == player ? 1.0f : 0.0f);
         }
         
@@ -210,8 +216,8 @@ std::string InfoState::toString() const {
     ss << std::endl;
     
     ss << "Action history: ";
-    for (const auto& [player, action] : action_history_) {
-        ss << "P" << player << ":" << actionTypeToString(action) << " ";
+    for (const auto& action : action_history_) {
+        ss << "P" << action.getPlayerId() << ":" << actionTypeToString(action.getActionType()) << " ";
     }
     ss << std::endl;
     

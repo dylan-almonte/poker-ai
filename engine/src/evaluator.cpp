@@ -210,6 +210,7 @@ int Evaluator::evaluate(const std::vector<Card>& cards, const std::vector<Card>&
     int min_rank = LookupTable::MAX_HIGH_CARD;
     std::vector<std::vector<Card>> combinations;
     
+    // TODO: change to use n choose 5
     // Generate all 5-card combinations
     for (size_t i = 0; i < all_cards.size() - 4; i++) {
         for (size_t j = i + 1; j < all_cards.size() - 3; j++) {

@@ -13,20 +13,22 @@ Game::Game(int num_players, int starting_chips, int small_blind, int big_blind)
     
     // Initialize players
     for (int i = 0; i < num_players; i++) {
-        players_.push_back(std::make_shared<Player>(
-            i, "Player " + std::to_string(i), starting_chips));
+        auto player = std::make_shared<Player>(
+            i, "Player " + std::to_string(i), starting_chips);
+        players_.push_back(player);
     }
     
     // Initialize first pot
     pots_.push_back(std::make_shared<Pot>());
 }
 
-void Game::startHand() {
+void Game::startHand(int btn_loc) {
+    
     // Reset game state
     board_.clear();
     for (auto& player : players_) {
         player->clearHand();
-        player->setState(PlayerState::IN);
+        player->setState(PlayerState::TO_CALL);
         player->setLastPot(0);
         player->setInitialStack(player->getChips());
     }
@@ -36,7 +38,11 @@ void Game::startHand() {
     pots_.push_back(std::make_shared<Pot>());
     
     // Move blinds and deal cards
-    moveBlinds();
+    if (btn_loc != -1) {
+        btn_loc_ = btn_loc;
+    } else {    
+        moveBlinds();
+    }
     dealCards();
     postBlinds();
     
@@ -78,12 +84,14 @@ void Game::postBlinds() {
     int bb_amount = std::min(big_blind_, bb_player->getChips());
     bb_player->setChips(bb_player->getChips() - bb_amount);
     pots_[0]->player_post(bb_pos, bb_amount);
-    
+    bb_player->setState(PlayerState::TO_CALL);
     if (bb_amount < big_blind_) {
         bb_player->setState(PlayerState::ALL_IN);
     }
     
     // Set current player to UTG
+    // set last player to BB
+    last_player_ = bb_pos;
     current_player_ = (bb_pos + 1) % players_.size();
 }
 
@@ -121,9 +129,8 @@ void Game::handleAction(Action action) {
     auto player = players_[current_player_];
     auto current_pot = pots_.back();
 
-    action.handlePotOdds(action.getAmount(), current_pot->get_total_amount());
     action_history_.push_back(action);
-    
+
     switch (action.getActionType()) {
         case ActionType::FOLD:
             player->setState(PlayerState::OUT);
@@ -131,6 +138,8 @@ void Game::handleAction(Action action) {
             
         case ActionType::CHECK:
             // No action needed
+            player->setState(PlayerState::IN);
+
             break;
             
         case ActionType::CALL: {
@@ -197,6 +206,11 @@ void Game::takeAction(Action action) {
         if (new_cards > 0) {
             auto cards = deck_.draw(new_cards);
             board_.insert(board_.end(), cards.begin(), cards.end());
+        }
+        for (const auto& player : players_) {
+            if (player->getState() == PlayerState::IN) {
+                player->setState(PlayerState::TO_CALL);
+            }
         }
         
         // Reset current player to first active player after button
@@ -308,6 +322,7 @@ void Game::printState() const {
         // Only show cards for active players
         if (player->isActive() || player->isAllIn()) {
             std::cout << " " << prettyPrintCards(player->getHand());
+            std::cout << " " << pots_[pots_.size() - 1]->get_player_amount(i);
         }
         
         // Show button position

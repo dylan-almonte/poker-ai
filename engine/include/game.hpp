@@ -12,7 +12,7 @@
 
 class Game {
 private:
-    std::vector<Action> action_history_ ;
+    std::vector<Action> action_history_;
     std::vector<std::shared_ptr<Player>> players_;
     std::vector<std::shared_ptr<Pot>> pots_;
     std::vector<Card> board_;
@@ -20,6 +20,7 @@ private:
     
     int btn_loc_;
     int current_player_;
+    int last_player_; // last player to act in the current phase
     HandPhase::Phase phase_;
     
     int small_blind_;
@@ -31,13 +32,14 @@ private:
     bool isValidAction(Action action) const;
     void handleAction(Action action);
     void settleHand();
+    void setupPlayerQueue();
 
 
 public:
 
     Game(int num_players, int starting_chips, int small_blind, int big_blind);
     
-    void startHand();
+    void startHand(int btn_loc = -1);
     void takeAction(Action action);
     bool isHandComplete() const;
     

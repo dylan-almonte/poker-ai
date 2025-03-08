@@ -18,5 +18,6 @@ public:
     void collect_bets();
     void remove_player(int player_id);
     int get_amount() const { return amount_; }
+    int get_raised() const { return raised_; }
     int get_total_amount() const;
 }; 

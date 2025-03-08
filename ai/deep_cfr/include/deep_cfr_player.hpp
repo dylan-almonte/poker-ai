@@ -30,7 +30,7 @@ public:
         
         // Get action probabilities from Deep CFR
         std::vector<float> probs = deep_cfr_->getActionProbabilities(info_state);
-        std::vector<ActionType> legal_actions = info_state.getLegalActions();
+        std::vector<Action> legal_actions = info_state.getLegalActions();
         
         // Exploration: with small probability, choose a random action
         if (explore_ && std::uniform_real_distribution<float>(0, 1)(rng_) < explore_prob_) {
@@ -53,10 +53,10 @@ public:
         // Set amount based on action type
         // This is a simplified version - in a real implementation, you would want
         // to have the neural network also predict bet sizes
-        if (action == ActionType::RAISE) {
+        if (action.getActionType() == ActionType::RAISE) {
             // Simple heuristic: raise 2x the current bet
             amount = 2 * game.getPots().back()->chips_to_call(getId());
-        } else if (action == ActionType::ALL_IN) {
+        } else if (action.getActionType() == ActionType::ALL_IN) {
             amount = getChips();
         } else {
             // For CALL, CHECK, FOLD, the amount is determined by the game engine

@@ -14,7 +14,7 @@ find_package(PythonLibs REQUIRED)
 set(SOURCES
     src/deep_cfr.cpp
     src/info_state.cpp
-    src/neural_net.cpp
+    src/cfr_neural_net.cpp
 )
 
 # Create the library

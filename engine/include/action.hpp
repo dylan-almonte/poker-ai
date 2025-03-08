@@ -16,9 +16,11 @@ private:
     ActionType action_type_;
     int player_id_;
     int amount_;
-    float pot_odds_;
-
 public:
+    Action(ActionType action_type) : 
+        action_type_(action_type), 
+        player_id_(-1), 
+        amount_(0) {}
     Action(ActionType action_type, int player_id, int amount) : 
         action_type_(action_type), 
         player_id_(player_id), 
@@ -26,6 +28,4 @@ public:
     ActionType getActionType() const { return action_type_; }
     int getPlayerId() const { return player_id_; }
     int getAmount() const { return amount_; }   
-    float getPotOdds() const { return pot_odds_; }
-    void handlePotOdds(int ammount, int pot_size) { pot_odds_ = (float)ammount / (float)pot_size; }
 };

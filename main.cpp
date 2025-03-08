@@ -165,53 +165,53 @@ int main(int argc, char** argv) {
         std::cout << "Playing " << num_hands << " hands..." << std::endl;
         printSeparator();
         
-        // Play some hands
-        for (int hand = 0; hand < num_hands; hand++) {
-            std::cout << "\n=== Hand " << hand + 1 << " ===" << std::endl;
+        // // Play some hands
+        // for (int hand = 0; hand < num_hands; hand++) {
+        //     std::cout << "\n=== Hand " << hand + 1 << " ===" << std::endl;
             
-            game.startHand();
-            std::cout << "Hand started. Initial state:" << std::endl;
-            game.printState();
+        //     game.startHand();
+        //     std::cout << "Hand started. Initial state:" << std::endl;
+        //     game.printState();
             
-            int action_count = 0;
-            while (!game.isHandComplete()) {
-                action_count++;
-                int current_player_id = game.getCurrentPlayer();
-                auto current_player = cfr_players[current_player_id];
+        //     int action_count = 0;
+        //     while (!game.isHandComplete()) {
+        //         action_count++;
+        //         int current_player_id = game.getCurrentPlayer();
+        //         auto current_player = cfr_players[current_player_id];
                 
-                std::cout << "\nAction #" << action_count << ": Player " << current_player_id 
-                          << " (" << current_player->getName() << ") to act" << std::endl;
+        //         std::cout << "\nAction #" << action_count << ": Player " << current_player_id 
+        //                   << " (" << current_player->getName() << ") to act" << std::endl;
                 
-                ActionType action;
-                int amount = 0;
+        //         ActionType action;
+        //         int amount = 0;
                 
-                // Get action from the current player
-                std::cout << "  Getting action from player..." << std::endl;
-                current_player->takeAction(game, action, amount);
+        //         // Get action from the current player
+        //         std::cout << "  Getting action from player..." << std::endl;
+        //         current_player->takeAction(game, action, amount);
                 
-                std::cout << "  Player " << current_player_id << " takes action: " 
-                          << actionTypeToString(action);
+        //         std::cout << "  Player " << current_player_id << " takes action: " 
+        //                   << actionTypeToString(action);
                 
-                if (action == ActionType::RAISE || action == ActionType::ALL_IN) {
-                    std::cout << " " << amount;
-                }
-                std::cout << std::endl;
+        //         if (action == ActionType::RAISE || action == ActionType::ALL_IN) {
+        //             std::cout << " " << amount;
+        //         }
+        //         std::cout << std::endl;
                 
-                // Apply the action
-                game.takeAction(action, amount);
+        //         // Apply the action
+        //         game.takeAction(action, amount);
                 
-                std::cout << "  Updated game state:" << std::endl;
-                game.printState();
-            }
+        //         std::cout << "  Updated game state:" << std::endl;
+        //         game.printState();
+        //     }
             
-            // Print hand results
-            std::cout << "\n=== Hand " << hand + 1 << " Results ===" << std::endl;
-            for (const auto& player : cfr_players) {
-                std::cout << "  Player " << player->getId() << " (" << player->getName() 
-                          << "): " << player->getChips() << " chips" << std::endl;
-            }
-            printSeparator();
-        }
+        //     // Print hand results
+        //     std::cout << "\n=== Hand " << hand + 1 << " Results ===" << std::endl;
+        //     for (const auto& player : cfr_players) {
+        //         std::cout << "  Player " << player->getId() << " (" << player->getName() 
+        //                   << "): " << player->getChips() << " chips" << std::endl;
+        //     }
+        //     printSeparator();
+        // }
         
         // Print final results
         std::cout << "\n=== Final Results after " << num_hands << " hands ===" << std::endl;

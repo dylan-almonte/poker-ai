@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Collect all source files
 set(SOURCES
-    src/action_type.cpp
+    src/action.cpp
     src/card.cpp
     src/deck.cpp
     src/evaluator.cpp
@@ -24,6 +24,7 @@ target_include_directories(poker_engine
     PUBLIC 
         # This makes the include path available to any target that links poker_engine
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:include>
 )
 

@@ -46,3 +46,4 @@ int Pot::get_total_amount() const {
     return amount_ + std::accumulate(player_amounts_.begin(), player_amounts_.end(), 0,
         [](int sum, const auto& pair) { return sum + pair.second; });
 } 
+
