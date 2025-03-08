@@ -120,6 +120,9 @@ bool Game::isValidAction(Action action) const {
 void Game::handleAction(Action action) {
     auto player = players_[current_player_];
     auto current_pot = pots_.back();
+
+    action.handlePotOdds(action.getAmount(), current_pot->get_total_amount());
+    action_history_.push_back(action);
     
     switch (action.getActionType()) {
         case ActionType::FOLD:
