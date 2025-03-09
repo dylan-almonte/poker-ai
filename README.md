@@ -20,3 +20,9 @@ I also wanted to learn more about poker theory and deep learning in general, so 
 - `lib/`: Directory for the custom neural network library.
 
 
+### TODO
+
+- [ ] Fix bug where all players go all in at the same time
+- [ ] Make general game interface for AI to use
+- [ ] Make an engine to play against the AI
+- [ ] Adjust game engine to be thread safe
