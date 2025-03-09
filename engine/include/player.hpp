@@ -37,7 +37,7 @@ public:
     void clearHand() { hand_.clear(); }
 
     // State checks
-    bool isActive() const { return state_ == PlayerState::IN || state_ == PlayerState::TO_CALL || state_ == PlayerState::ALL_IN; }
+    bool isActive() const { return state_ == PlayerState::IN || state_ == PlayerState::TO_CALL; }
     bool isAllIn() const { return state_ == PlayerState::ALL_IN || (isActive() && chips_ == 0); }
     bool hasFolded() const { return state_ == PlayerState::OUT; }
 

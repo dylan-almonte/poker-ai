@@ -22,17 +22,39 @@ private:
     int current_player_;
     int last_player_; // last player to act in the current phase
     HandPhase::Phase phase_;
-    
+
     int small_blind_;
     int big_blind_;
+    int last_raise_ = 0;
     
-    void dealCards();
-    void postBlinds();
-    void moveBlinds();
-    bool isValidAction(Action action) const;
-    void handleAction(Action action);
-    void setupPlayerQueue();
-    Action translateAllIn(Action action);
+    void _dealCards();
+    void _postBlinds();
+
+    /**
+     * Let a player post the given amount and sets the corresponding board state
+     * (i.e. makes other player states TO_CALL, sets ALL_IN). Also handles all
+     * pots (i.e. split pots).
+     * 
+     * @param player_idx The index of the player to post the amount
+     * @param amount The amount to post
+     */
+    void _postPlayerBets(int player_idx, int amount);
+
+    /**
+     * 
+     */
+    void _splitPot(int pot_idx, int raise_level);
+
+    void _preHandSetup();
+    void _bettingRound(HandPhase::Phase phase);
+    void _settleHand();
+
+    void _moveBlinds();
+    bool _isValidAction(Action action) const;
+    void _handleAction(Action action);
+    void _handlePhaseChange();
+    void _setupPlayerQueue();
+    Action _translateAllIn(Action action);
 
 
 public:
@@ -61,7 +83,7 @@ public:
 
     float getPayoff(int player_idx) const;
     int getInitialStackTotal() const;
-    
+    int getTotalToCall(int player_id) const;
     // Get action history
     const std::vector<Action>& getActionHistory() const { return action_history_; }
     
