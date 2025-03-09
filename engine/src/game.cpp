@@ -156,7 +156,7 @@ void Game::handleAction(Action action) {
             
             // Set other players to TO_CALL
             for (auto& p : players_) {
-                if (p->isActive() && p->getId() != current_player_) {
+                if (p->isActive() && p->getId() != current_player_ && !p->isAllIn()) {
                     p->setState(PlayerState::TO_CALL);
                 }
             }
@@ -251,7 +251,18 @@ bool Game::isHandComplete() const {
     return phase_ == HandPhase::Phase::SETTLE;
 }
 
+bool Game::isHandOver() const {
+    int active_count = 0;
+    for (const auto& player : players_) {
+        if (player->isActive() && !player->isAllIn()) {
+            active_count++;
+        }
+    }
+    return active_count <= 1;
+}
+
 void Game::settleHand() {
+
     // Evaluate hands and distribute pots
     for (auto& pot : pots_) {
         std::vector<int> pot_players = pot->players_in_pot();

@@ -6,6 +6,7 @@
 
 
 #define MAX_FEATURE_SIZE 500
+#define MAX_ACTIONS 10
 // Class to represent an information state in poker
 class InfoState {
 private:
@@ -19,6 +20,8 @@ private:
     std::vector<Action> action_history_;
 
     int last_bet_ = 0;
+
+    int num_actions_;
 
     bool isValidAction(const Action& action) const;
 

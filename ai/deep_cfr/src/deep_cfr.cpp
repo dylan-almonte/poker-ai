@@ -4,7 +4,7 @@
 #include <iostream>
 #include <filesystem>
 
-DeepCFR::DeepCFR(int num_players, int num_traversals, float alpha)
+DeepCFR::DeepCFR(int num_players, int num_traversals, float alpha, int num_actions)
     : strategy_buffer_(1000000),
     rng_(std::random_device{}()),
     num_players_(num_players),
@@ -14,7 +14,7 @@ DeepCFR::DeepCFR(int num_players, int num_traversals, float alpha)
     // Initialize neural networks
     const int input_size = 500;  // Size of the feature vector for poker states
     const int hidden_size = 256;
-    const int output_size = 8;   // Number of possible actions in poker
+    const int output_size = num_actions;   // Number of possible actions in poker
 
     // Create advantage networks for each player
     for (int i = 0; i < num_players_; i++) {
@@ -207,7 +207,7 @@ void DeepCFR::updateAdvantageNet(int player_id, int batch_size) {
         features_batch.push_back(memory.info_state.toFeatureVector());
         std::vector<float> padded_advantages = memory.advantages;
         // Pad advantages to fixed size
-        while (padded_advantages.size() < 8) {
+        while (padded_advantages.size() < num_actions_) {
             padded_advantages.push_back(0.0f);
         }
         targets_batch.push_back(padded_advantages);
@@ -237,7 +237,7 @@ void DeepCFR::updateStrategyNet(int batch_size) {
         features_batch.push_back(memory.info_state.toFeatureVector());
         std::vector<float> padded_strategy = memory.strategy;
         // Pad strategy to fixed size
-        while (padded_strategy.size() < 8) {
+        while (padded_strategy.size() < num_actions_) {
             padded_strategy.push_back(0.0f);
         }
         targets_batch.push_back(padded_strategy);

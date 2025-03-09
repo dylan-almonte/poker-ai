@@ -29,6 +29,7 @@ private:
     // Parameters
     int num_players_;
     int num_traversals_;
+    int num_actions_;
     float alpha_; // Linear weighting of iterations (typically 2.0)
     std::vector<float> iteration_weights_;
     
@@ -41,7 +42,8 @@ private:
 public:
     DeepCFR(int num_players, 
             int num_traversals = 1000,
-            float alpha = 2.0);
+            float alpha = 2.0,
+            int num_actions = MAX_ACTIONS);
     
     // Train the Deep CFR agent
     void train(int iterations, int advantage_batch_size = 128, int strategy_batch_size = 128);
