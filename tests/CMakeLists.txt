@@ -34,4 +34,4 @@ target_link_libraries(engine_tests
     gtest_main
     poker_engine  # Your engine library
 )
-target_compile_definitions(engine_tests PRIVATE -DDEBUG)
+# target_compile_definitions(engine_tests PRIVATE -DDEBUG)
