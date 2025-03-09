@@ -18,7 +18,9 @@ private:
     std::vector<PlayerState> player_states_;
     std::vector<Action> action_history_;
 
-    float total_pot_size_ = 0.0f;
+    int last_bet_ = 0;
+
+    bool isValidAction(const Action& action) const;
 
 public:
     InfoState(int player_id,
@@ -29,7 +31,7 @@ public:
               const std::vector<int>& player_stacks,
               const std::vector<PlayerState>& player_states,
               const std::vector<Action>& action_history,
-              float total_pot_size);
+              int last_bet_);
 
     // Create an InfoState from a Game object
     static InfoState fromGame(const Game& game, int player_id);

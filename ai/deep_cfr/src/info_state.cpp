@@ -1,6 +1,13 @@
 #include "info_state.hpp"
 #include <sstream>
 
+#ifndef NDEBUG
+#include <assert.h>
+#define ASSERT(condition) assert(condition)
+#else
+#define ASSERT(condition) ((void)0)
+#endif
+
 InfoState::InfoState(int player_id, 
                      const std::vector<Card>& hole_cards,
                      const std::vector<Card>& board_cards,
@@ -9,7 +16,7 @@ InfoState::InfoState(int player_id,
                      const std::vector<int>& player_stacks,
                      const std::vector<PlayerState>& player_states,
                      const std::vector<Action>& action_history,
-                     float total_pot_size)
+                     int last_bet)
     : player_id_(player_id),
       hole_cards_(hole_cards),
       board_cards_(board_cards),
@@ -18,7 +25,7 @@ InfoState::InfoState(int player_id,
       player_stacks_(player_stacks),
       player_states_(player_states),
       action_history_(action_history),
-      total_pot_size_(total_pot_size) {}
+      last_bet_(last_bet) {}
 
 InfoState InfoState::fromGame(const Game& game, int player_id) {
     // Extract player's hole cards
@@ -33,12 +40,11 @@ InfoState InfoState::fromGame(const Game& game, int player_id) {
     
     // Extract pot sizes
     std::vector<int> pot_sizes;
-    int total_pot_size = 0;
     for (const auto& pot : game.getPots()) {
         int amt = pot->get_amount();
         pot_sizes.push_back(amt);
-        total_pot_size += amt;
     }
+    int last_bet = game.getPots().back()->chips_to_call(player_id);
     
     // Extract player stacks
     std::vector<int> player_stacks;
@@ -57,16 +63,16 @@ InfoState InfoState::fromGame(const Game& game, int player_id) {
     std::vector<Action> action_history = game.getActionHistory();
     
     return InfoState(player_id, hole_cards, board_cards, phase, pot_sizes, 
-                     player_stacks, player_states, action_history, total_pot_size);
+                     player_stacks, player_states, action_history, last_bet);
 }
 
 std::vector<float> InfoState::toFeatureVector() const {
     // This is a simplified feature vector for poker
     // In a real implementation, you would want a more comprehensive representation
     std::vector<float> features;
-    
+    int num_players = player_states_.size();
     // One-hot encode player ID
-    for (int i = 0; i < 6; i++) {  // Assuming max 6 players
+    for (int i = 0; i < num_players; i++) {  // Assuming max 6 players
         features.push_back(i == player_id_ ? 1.0f : 0.0f);
     }
     
@@ -110,7 +116,7 @@ std::vector<float> InfoState::toFeatureVector() const {
     
     // Encode pot sizes (normalized)
     for (int pot : pot_sizes_) {
-        features.push_back(static_cast<float>(pot) / total_pot_size_);  // Normalize by max pot
+        features.push_back(static_cast<float>(pot));  // Normalize by max pot
     }
     
     // Encode player stacks (normalized)
@@ -124,7 +130,6 @@ std::vector<float> InfoState::toFeatureVector() const {
             features.push_back(i == static_cast<int>(state) ? 1.0f : 0.0f);
         }
     }
-    int num_players = player_states_.size();
     
     // Encode action history (simplified)
     // In a real implementation, you would want to encode the full action history
@@ -146,7 +151,7 @@ std::vector<float> InfoState::toFeatureVector() const {
     }
     
     // Pad to fixed size if needed
-    while (features.size() < 500) {
+    while (features.size() < MAX_FEATURE_SIZE) {
         features.push_back(0.0f);
     }
     
@@ -160,21 +165,61 @@ int InfoState::getNumActions() const {
 std::vector<Action> InfoState::getLegalActions() const {
     // Simplified legal actions based on the game phase
     std::vector<Action> actions;
-    std::vector<int32_t> bet_sizes;
+    // Check/call
+    if (isValidAction(Action(ActionType::CALL))) {
+        actions.push_back(Action(ActionType::CALL));
+    }
+    if (isValidAction(Action(ActionType::CHECK))) {
+        actions.push_back(Action(ActionType::CHECK));
+    }   
+    int current_pot = pot_sizes_.back();
+    if (player_states_[player_id_] == PlayerState::ALL_IN) {
+        return actions;
+    }
+   
     
     // Always include fold (except preflop with no raises)
     if (phase_ != HandPhase::Phase::PREFLOP || !action_history_.empty()) {
-        actions.push_back(Action(ActionType::FOLD, 0, 0));
+        actions.push_back(Action(ActionType::FOLD));
+    }
+    if (isValidAction(Action(ActionType::ALL_IN))) {
+        actions.push_back(Action(ActionType::ALL_IN));
     }
     
-    // Check/call
-    actions.push_back(Action(ActionType::CALL, 0, 0));
+    if (last_bet_ >= player_stacks_[player_id_]) {
+        return actions;
+    }
     
-    // Raise/bet
-    actions.push_back(Action(ActionType::RAISE, 0, 0));
+    // Raises
+    // min raise
+    int min_raise =  2 * last_bet_;
+    int third_pot = current_pot / 3;
+    int quarter_pot = current_pot / 4;
+    int half_pot = current_pot / 2;
+
+    Action raise_min = Action(ActionType::RAISE, min_raise);
+    Action raise_third = Action(ActionType::RAISE, third_pot);
+    Action raise_quarter = Action(ActionType::RAISE, quarter_pot);
+    Action raise_half = Action(ActionType::RAISE, half_pot);
+    Action raise_current = Action(ActionType::RAISE, current_pot);
+
+    if (isValidAction(raise_min)) {
+        actions.push_back(raise_min);
+    }
+    if (isValidAction(raise_third)) {
+        actions.push_back(raise_third);
+    }
+    if (isValidAction(raise_quarter)) {
+        actions.push_back(raise_quarter);
+    }
+    if (isValidAction(raise_half)) {
+        actions.push_back(raise_half);
+    }
+    if (isValidAction(raise_current)) {
+        actions.push_back(raise_current);
+    }
     
     // All-in
-    actions.push_back(Action(ActionType::ALL_IN, 0, 0));
     
     return actions;
 }
@@ -223,3 +268,25 @@ std::string InfoState::toString() const {
     
     return ss.str();
 } 
+
+bool InfoState::isValidAction(const Action& action) const {
+    switch (action.getActionType()) {
+        case ActionType::FOLD:
+            return true;
+            
+        case ActionType::CHECK:
+            return last_bet_ == 0;
+            
+        case ActionType::CALL:
+            return last_bet_ >= 0 && last_bet_ <= player_stacks_[player_id_];
+            
+        case ActionType::RAISE:
+            return action.getAmount() > last_bet_ && action.getAmount() <= player_stacks_[player_id_];
+            
+        case ActionType::ALL_IN:
+            return player_stacks_[player_id_] > 0;
+            
+        default:
+            return false;
+    }
+}

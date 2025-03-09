@@ -14,7 +14,7 @@ DeepCFR::DeepCFR(int num_players, int num_traversals, float alpha)
     // Initialize neural networks
     const int input_size = 500;  // Size of the feature vector for poker states
     const int hidden_size = 256;
-    const int output_size = 5;   // Number of possible actions in poker
+    const int output_size = 8;   // Number of possible actions in poker
 
     // Create advantage networks for each player
     for (int i = 0; i < num_players_; i++) {
@@ -122,11 +122,7 @@ float DeepCFR::traverseCFR(Game& game, int traversing_player, int iteration, flo
 
         // Apply the chosen action and continue
         Game next_state = game;
-        if (chosen_action.getActionType() == ActionType::RAISE) {
-            next_state.takeAction(chosen_action);
-        } else {
-            next_state.takeAction(chosen_action);
-        }
+        next_state.takeAction(chosen_action);
         return traverseCFR(next_state, traversing_player, iteration, reach_prob);
     }
 
@@ -209,7 +205,12 @@ void DeepCFR::updateAdvantageNet(int player_id, int batch_size) {
 
     for (const auto& memory : batch) {
         features_batch.push_back(memory.info_state.toFeatureVector());
-        targets_batch.push_back(memory.advantages);
+        std::vector<float> padded_advantages = memory.advantages;
+        // Pad advantages to fixed size
+        while (padded_advantages.size() < 8) {
+            padded_advantages.push_back(0.0f);
+        }
+        targets_batch.push_back(padded_advantages);
     }
 
     // Train the network
@@ -234,7 +235,12 @@ void DeepCFR::updateStrategyNet(int batch_size) {
 
     for (const auto& memory : batch) {
         features_batch.push_back(memory.info_state.toFeatureVector());
-        targets_batch.push_back(memory.strategy);
+        std::vector<float> padded_strategy = memory.strategy;
+        // Pad strategy to fixed size
+        while (padded_strategy.size() < 8) {
+            padded_strategy.push_back(0.0f);
+        }
+        targets_batch.push_back(padded_strategy);
     }
 
     // Train the network

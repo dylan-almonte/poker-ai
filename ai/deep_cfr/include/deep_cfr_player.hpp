@@ -24,7 +24,7 @@ public:
           explore_(explore),
           explore_prob_(explore_prob) {}
 
-    void takeAction(const Game& game, Action& action, int& amount) {
+    Action takeAction(const Game& game) {
         // Create info state from game
         InfoState info_state = InfoState::fromGame(game, getId());
         
@@ -35,7 +35,7 @@ public:
         // Exploration: with small probability, choose a random action
         if (explore_ && std::uniform_real_distribution<float>(0, 1)(rng_) < explore_prob_) {
             int random_idx = std::uniform_int_distribution<int>(0, legal_actions.size() - 1)(rng_);
-            action = legal_actions[random_idx];
+            return legal_actions[random_idx];
         } else {
             // Otherwise, sample from the strategy
             float r = std::uniform_real_distribution<float>(0, 1)(rng_);
@@ -44,23 +44,10 @@ public:
             for (size_t i = 0; i < legal_actions.size(); i++) {
                 cumulative_prob += probs[i];
                 if (r < cumulative_prob) {
-                    action = legal_actions[i];
-                    break;
+                    return legal_actions[i];
                 }
             }
-        }
-        
-        // Set amount based on action type
-        // This is a simplified version - in a real implementation, you would want
-        // to have the neural network also predict bet sizes
-        if (action.getActionType() == ActionType::RAISE) {
-            // Simple heuristic: raise 2x the current bet
-            amount = 2 * game.getPots().back()->chips_to_call(getId());
-        } else if (action.getActionType() == ActionType::ALL_IN) {
-            amount = getChips();
-        } else {
-            // For CALL, CHECK, FOLD, the amount is determined by the game engine
-            amount = 0;
+            return legal_actions.front();
         }
     }
 }; 

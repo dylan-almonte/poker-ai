@@ -31,8 +31,8 @@ private:
     void moveBlinds();
     bool isValidAction(Action action) const;
     void handleAction(Action action);
-    void settleHand();
     void setupPlayerQueue();
+    Action translateAllIn(Action action);
 
 
 public:
@@ -49,6 +49,8 @@ public:
     const std::vector<std::shared_ptr<Pot>>& getPots() const { return pots_; }
     int getCurrentPlayer() const { return current_player_; }
     HandPhase::Phase getPhase() const { return phase_; }
+    bool isHandOver() const;
+    void settleHand();
     
     // Add this new method
     void printState() const;

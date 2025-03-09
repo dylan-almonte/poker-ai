@@ -14,17 +14,21 @@ std::string actionTypeToString(ActionType type);
 class Action {
 private:
     ActionType action_type_;
-    int player_id_;
     int amount_;
+    int player_id_;
 public:
     Action(ActionType action_type) : 
         action_type_(action_type), 
-        player_id_(-1), 
-        amount_(0) {}
+        amount_(0),
+        player_id_(-1) {}
+    Action(ActionType action_type, int amount) : 
+        action_type_(action_type), 
+        amount_(amount),
+        player_id_(-1) {}
     Action(ActionType action_type, int player_id, int amount) : 
         action_type_(action_type), 
-        player_id_(player_id), 
-        amount_(amount) {}
+        amount_(amount),
+        player_id_(player_id) {}
     ActionType getActionType() const { return action_type_; }
     int getPlayerId() const { return player_id_; }
     int getAmount() const { return amount_; }   

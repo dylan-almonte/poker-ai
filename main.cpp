@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
         // Parse command line arguments
         bool train_mode = false;
         int num_iterations = 100;
-        int num_traversals = 1000;
+        int num_traversals = 10000;
         int num_players = 6;
         int starting_chips = 1000;
         int small_blind = 10;
@@ -143,7 +143,6 @@ int main(int argc, char** argv) {
         std::cout << "  Starting chips: " << starting_chips << std::endl;
         std::cout << "  Blinds: " << small_blind << "/" << big_blind << std::endl;
         
-        Game game(num_players, starting_chips, small_blind, big_blind);
         
         // Add Deep CFR players
         std::vector<std::shared_ptr<DeepCFRPlayer>> cfr_players;
@@ -165,53 +164,52 @@ int main(int argc, char** argv) {
         std::cout << "Playing " << num_hands << " hands..." << std::endl;
         printSeparator();
         
-        // // Play some hands
-        // for (int hand = 0; hand < num_hands; hand++) {
-        //     std::cout << "\n=== Hand " << hand + 1 << " ===" << std::endl;
+        // Play some hands
+        for (int hand = 0; hand < num_hands; hand++) {
+            std::cout << "\n=== Hand " << hand + 1 << " ===" << std::endl;
+            Game game(num_players, starting_chips, small_blind, big_blind);
             
-        //     game.startHand();
-        //     std::cout << "Hand started. Initial state:" << std::endl;
-        //     game.printState();
+            game.startHand();
+            std::cout << "Hand started. Initial state:" << std::endl;
+            game.printState();
             
-        //     int action_count = 0;
-        //     while (!game.isHandComplete()) {
-        //         action_count++;
-        //         int current_player_id = game.getCurrentPlayer();
-        //         auto current_player = cfr_players[current_player_id];
+            int action_count = 0;
+            while (!game.isHandComplete()) {
+                action_count++;
+                int current_player_id = game.getCurrentPlayer();
+                auto current_player = cfr_players[current_player_id];
                 
-        //         std::cout << "\nAction #" << action_count << ": Player " << current_player_id 
-        //                   << " (" << current_player->getName() << ") to act" << std::endl;
+                std::cout << "\nAction #" << action_count << ": Player " << current_player_id 
+                          << " (" << current_player->getName() << ") to act" << std::endl;
                 
-        //         ActionType action;
-        //         int amount = 0;
+                Action action = current_player->takeAction(game);
                 
-        //         // Get action from the current player
-        //         std::cout << "  Getting action from player..." << std::endl;
-        //         current_player->takeAction(game, action, amount);
+                // Get action from the current player
+                std::cout << "  Getting action from player..." << std::endl;
                 
-        //         std::cout << "  Player " << current_player_id << " takes action: " 
-        //                   << actionTypeToString(action);
+                std::cout << "  Player " << current_player_id << " takes action: " 
+                          << actionTypeToString(action.getActionType());
                 
-        //         if (action == ActionType::RAISE || action == ActionType::ALL_IN) {
-        //             std::cout << " " << amount;
-        //         }
-        //         std::cout << std::endl;
+                if (action.getActionType() == ActionType::RAISE || action.getActionType() == ActionType::ALL_IN) {
+                    std::cout << " " << action.getAmount();
+                }
+                std::cout << std::endl;
                 
-        //         // Apply the action
-        //         game.takeAction(action, amount);
+                // Apply the action
+                game.takeAction(action);
                 
-        //         std::cout << "  Updated game state:" << std::endl;
-        //         game.printState();
-        //     }
-            
-        //     // Print hand results
-        //     std::cout << "\n=== Hand " << hand + 1 << " Results ===" << std::endl;
-        //     for (const auto& player : cfr_players) {
-        //         std::cout << "  Player " << player->getId() << " (" << player->getName() 
-        //                   << "): " << player->getChips() << " chips" << std::endl;
-        //     }
-        //     printSeparator();
-        // }
+                std::cout << "  Updated game state:" << std::endl;
+                game.printState();
+            }
+            game.settleHand();
+            // Print hand results
+            std::cout << "\n=== Hand " << hand + 1 << " Results ===" << std::endl;
+            for (const auto& player : game.getPlayers()) {
+                std::cout << "  Player " << player->getId() << " (" << player->getName() 
+                          << "): " << player->getChips() << " chips" << std::endl;
+            }
+            printSeparator();
+        }
         
         // Print final results
         std::cout << "\n=== Final Results after " << num_hands << " hands ===" << std::endl;

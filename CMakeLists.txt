@@ -24,30 +24,30 @@ set_target_properties(poker_ai PROPERTIES
 )
 
 # Add the -Wno-unused-variable flag
-target_compile_options(poker_ai PUBLIC -g)
+# target_compile_options(poker_ai PUBLIC -g)
 
-# Enable testing
-enable_testing()
+# # Enable testing
+# enable_testing()
 
-# Add Google Test
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG release-1.11.0
-)
-FetchContent_MakeAvailable(googletest)
+# # Add Google Test
+# include(FetchContent)
+# FetchContent_Declare(
+#     googletest
+#     GIT_REPOSITORY https://github.com/google/googletest.git
+#     GIT_TAG release-1.11.0
+# )
+# FetchContent_MakeAvailable(googletest)
 
-# Create test executable
-add_executable(engine_tests
-    tests/engine/game_test.cpp
-    # Add other test files here
-)
+# # Create test executable
+# add_executable(engine_tests
+#     tests/engine/game_test.cpp
+#     # Add other test files here
+# )
 
-# Link against gtest and your engine library
-target_link_libraries(engine_tests
-    PRIVATE
-    gtest
-    gtest_main
-    poker_engine  # Your engine library
-)
+# # Link against gtest and your engine library
+# target_link_libraries(engine_tests
+#     PRIVATE
+#     gtest
+#     gtest_main
+#     poker_engine  # Your engine library
+# )

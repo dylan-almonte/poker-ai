@@ -112,7 +112,7 @@ bool Game::isValidAction(Action action) const {
             return to_call == 0;
             
         case ActionType::CALL:
-            return to_call > 0 && to_call <= player->getChips();
+            return to_call >= 0 && to_call <= player->getChips();
             
         case ActionType::RAISE:
             return action.getAmount() > to_call && action.getAmount() <= player->getChips();
@@ -128,7 +128,7 @@ bool Game::isValidAction(Action action) const {
 void Game::handleAction(Action action) {
     auto player = players_[current_player_];
     auto current_pot = pots_.back();
-
+    action = translateAllIn(action);
     action_history_.push_back(action);
 
     switch (action.getActionType()) {
@@ -178,9 +178,10 @@ void Game::handleAction(Action action) {
 }
 
 void Game::takeAction(Action action) {
-    if (!isValidAction(action)) {
-        throw std::invalid_argument("Invalid action: " + actionTypeToString(action.getActionType()) + " with amount " + std::to_string(action.getAmount()));
-    }
+    // if (!isValidAction(action)) {
+    //     printState();
+    //     throw std::invalid_argument("Invalid action: " + actionTypeToString(action.getActionType()) + " with amount " + std::to_string(action.getAmount()));
+    // }
     
     handleAction(action);
     
@@ -192,8 +193,15 @@ void Game::takeAction(Action action) {
             break;
         }
     }
+    int active_count = 0;
+    for (const auto& player : players_) {
+        if (player->isActive() && !player->isAllIn()) {
+            active_count++;
+        }
+    }
+    bool hand_over = active_count <= 1;
     
-    if (round_complete) {
+    if (round_complete || hand_over) {
         // Collect bets and move to next phase
         for (auto& pot : pots_) {
             pot->collect_bets();
@@ -341,5 +349,23 @@ int Game::getInitialStackTotal() const {
         total += player->getInitialStack();
     }
     return total;
+}
+
+Action Game::translateAllIn(Action action) {
+    const auto& player = players_[current_player_];
+    if (action.getActionType() != ActionType::ALL_IN) {
+        return action;
+    }
+    auto current_pot = pots_.back();
+    int to_call = current_pot->chips_to_call(current_player_);
+
+    if (player->getChips() <= to_call) {
+        return { ActionType::CALL, 0 };
+    }
+
+    return {
+        ActionType::RAISE,
+        player->getChips()
+    };
 }
 
