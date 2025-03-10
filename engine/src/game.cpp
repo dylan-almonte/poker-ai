@@ -44,7 +44,8 @@ void Game::startHand(int btn_loc) {
         _moveBlinds();
     }
     _dealCards();
-    _postBlinds();
+    _postPlayerBets(btn_loc_, small_blind_);
+    _postPlayerBets(btn_loc_ + 1, big_blind_);
 
     phase_ = HandPhase::Phase::PREFLOP;
 }
@@ -90,7 +91,7 @@ void Game::_postPlayerBets(int player_idx, int amount) {
 
     int last_raise = pots_[last_pot_idx]->get_raised() - prev_raise_level;
     last_raise = std::max(last_raise, last_raise_);
-    
+
     auto pot_players = pots_[last_pot_idx]->players_in_pot();
 
     // players previously in pot need to call in event of a raise
@@ -139,7 +140,7 @@ void Game::_splitPot(int pot_idx, int raise_level) {
             split_pot.player_post(pot_player_id, pot->get_player_amount(pot_player_id) - raise_level);
         }
     }
-   
+
     auto active_players_ = getActivePlayers();
     for (int player_id : active_players_) {
         if (players_[player_id]->getChips() > getTotalToCall(player_id)) {
@@ -149,37 +150,6 @@ void Game::_splitPot(int pot_idx, int raise_level) {
 }
 
 
-void Game::_postBlinds() {
-    int sb_pos = (btn_loc_ + 1) % players_.size();
-    int bb_pos = (btn_loc_ + 2) % players_.size();
-
-    // Post small blind
-    auto& sb_player = players_[sb_pos];
-    int sb_amount = std::min(small_blind_, sb_player->getChips());
-    sb_player->setChips(sb_player->getChips() - sb_amount);
-    pots_[0]->player_post(sb_pos, sb_amount);
-
-    if (sb_amount < small_blind_) {
-        sb_player->setState(PlayerState::ALL_IN);
-    } else {
-        sb_player->setState(PlayerState::TO_CALL);
-    }
-
-    // Post big blind
-    auto& bb_player = players_[bb_pos];
-    int bb_amount = std::min(big_blind_, bb_player->getChips());
-    bb_player->setChips(bb_player->getChips() - bb_amount);
-    pots_[0]->player_post(bb_pos, bb_amount);
-    bb_player->setState(PlayerState::TO_CALL);
-    if (bb_amount < big_blind_) {
-        bb_player->setState(PlayerState::ALL_IN);
-    }
-
-    // Set current player to UTG
-    // set last player to BB
-    last_player_ = bb_pos;
-    current_player_ = (bb_pos + 1) % players_.size();
-}
 
 void Game::_moveBlinds() {
     btn_loc_ = (btn_loc_ + 1) % players_.size();
@@ -209,6 +179,22 @@ bool Game::_isValidAction(Action action) const {
     default:
         return false;
     }
+}
+
+bool Game::_isHandOver() const {
+    int count = 0;
+    for (const auto& player : players_) {
+        if (player->getState() == PlayerState::TO_CALL) {
+            return false;
+        }
+        if (player->getState() == PlayerState::IN) {
+            count++;
+        }
+        if (count > 1) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void Game::_handleAction(Action action) {
@@ -283,6 +269,129 @@ Action Game::_translateAllIn(Action action) {
 
 
 
+void Game::_settleHand() {
+
+    // Evaluate and distribute each pot
+    for (size_t i = 0; i < pots_.size(); i++) {
+        auto& pot = pots_[i];
+        std::vector<int> players_in_pot = pot->players_in_pot();
+
+        // Only player left in pot wins
+        if (players_in_pot.size() == 1) {
+            players_[players_in_pot[0]]->setChips(
+                players_[players_in_pot[0]]->getChips() + pot->get_total_amount()
+            );
+            continue;
+        }
+
+        if (board_.size() < 5) {
+            auto cards = deck_.draw(5 - board_.size());
+            board_.insert(board_.end(), cards.begin(), cards.end());
+        }
+
+        // Find best hand among remaining players
+        std::unordered_map<int, int> player_ranks;
+        int best_rank = 7463; // Worst possible rank + 1
+        std::vector<int> winners;
+
+        for (int player_id : players_in_pot) {
+            if (players_[player_id]->hasFolded()) continue;
+
+            int rank = Evaluator::evaluate(players_[player_id]->getHand(), board_);
+            player_ranks[player_id] = rank;
+
+            if (rank < best_rank) {
+                best_rank = rank;
+                winners.clear();
+                winners.push_back(player_id);
+            } else if (rank == best_rank) {
+                winners.push_back(player_id);
+            }
+        }
+
+        // Split pot among winners
+        int win_amount = pot->get_total_amount() / winners.size();
+        for (int winner_id : winners) {
+            players_[winner_id]->setChips(
+                players_[winner_id]->getChips() + win_amount
+            );
+        }
+
+        // Handle leftover chips - give to first winner after button (WSOP Rule 73)
+        int leftover = pot->get_total_amount() - (win_amount * winners.size());
+        if (leftover > 0) {
+            for (int i = btn_loc_; i < btn_loc_ + static_cast<int>(players_.size()); i++) {
+                int player_id = i % players_.size();
+                if (std::find(winners.begin(), winners.end(), player_id) != winners.end()) {
+                    players_[player_id]->setChips(
+                        players_[player_id]->getChips() + leftover
+                    );
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+void Game::_takeAction(Action action) {
+    if (action.getActionType() == ActionType::ALL_IN) {
+        auto new_action = _translateAllIn(action);
+    }
+
+    int player_amount = players_[current_player_]->getChips();
+    int to_call = getTotalToCall(current_player_);
+
+    switch (action.getActionType()) {
+    case ActionType::CALL:
+        _postPlayerBets(current_player_, to_call);
+        break;
+    case ActionType::RAISE:
+        _postPlayerBets(current_player_, action.getAmount() - player_amount);
+        break;
+    case ActionType::FOLD:
+        players_[current_player_]->setState(PlayerState::OUT);
+        for (int i = 0; i < players_[current_player_]->getLastPot() + 1; i++) {
+            pots_[i]->remove_player(current_player_);
+        }
+        break;
+    }
+
+}
+
+void Game::_bettingRound(HandPhase::Phase phase) {
+    int new_cards = HandPhase::getNewCards(phase_);
+    if (new_cards > 0) {
+        auto cards = deck_.draw(new_cards);
+        board_.insert(board_.end(), cards.begin(), cards.end());
+    }
+
+    int first_pot_idx = pots_.size() - 1;
+
+    last_raise_ = 0;
+    raise_option_ = true;
+
+    current_player_ = btn_loc_ + 1;
+    if (phase_ == HandPhase::Phase::PREFLOP) {
+        current_player_ = bb_loc_ + 1;
+    }
+    auto active_players = getActivePlayers();
+    auto start_it = std::find(active_players.begin(), active_players.end(), current_player_);
+    std::deque<int> player_queue;
+    if (start_it != active_players.end()) {
+        player_queue.insert(player_queue.end(), start_it, active_players.end());
+        player_queue.insert(player_queue.end(), active_players.begin(), start_it);
+    }
+
+    
+
+    while (!isHandOver()) {
+        // WSOP 2021 Rule 96
+        // if no more active players that can raise continue with the players to call
+        // while disabling the raise availability.
+
+    }
+}
 /**************************************************
  * Public methods
  **************************************************/
@@ -365,40 +474,6 @@ bool Game::isHandOver() const {
         }
     }
     return active_count <= 1;
-}
-
-void Game::settleHand() {
-
-    // Evaluate hands and distribute pots
-    for (auto& pot : pots_) {
-        std::vector<int> pot_players = pot->players_in_pot();
-        if (pot_players.empty()) continue;
-
-        // Find best hand
-        int best_rank = 7463; // Worst possible rank + 1
-        std::vector<int> winners;
-
-        for (int player_id : pot_players) {
-            auto& player = players_[player_id];
-            if (player->hasFolded()) continue;
-
-            int rank = Evaluator::evaluate(player->getHand(), board_);
-            if (rank < best_rank) {
-                best_rank = rank;
-                winners.clear();
-                winners.push_back(player_id);
-            } else if (rank == best_rank) {
-                winners.push_back(player_id);
-            }
-        }
-
-        // Split pot among winners
-        int amount = pot->get_amount() / winners.size();
-        for (int winner_id : winners) {
-            players_[winner_id]->setChips(
-                players_[winner_id]->getChips() + amount);
-        }
-    }
 }
 
 float Game::getPayoff(int player_idx) const {

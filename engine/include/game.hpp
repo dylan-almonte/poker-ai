@@ -19,6 +19,8 @@ private:
     Deck deck_;
     
     int btn_loc_;
+    int sb_loc_;
+    int bb_loc_;
     int current_player_;
     int last_player_; // last player to act in the current phase
     HandPhase::Phase phase_;
@@ -26,7 +28,7 @@ private:
     int small_blind_;
     int big_blind_;
     int last_raise_ = 0;
-    
+    bool raise_option_ = true;
     void _dealCards();
     void _postBlinds();
 
@@ -48,9 +50,10 @@ private:
     void _preHandSetup();
     void _bettingRound(HandPhase::Phase phase);
     void _settleHand();
-
+    void _takeAction(Action action);
     void _moveBlinds();
     bool _isValidAction(Action action) const;
+    bool _isHandOver() const;
     void _handleAction(Action action);
     void _handlePhaseChange();
     void _setupPlayerQueue();
