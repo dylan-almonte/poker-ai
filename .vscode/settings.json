@@ -71,7 +71,9 @@
         "valarray": "cpp",
         "variant": "cpp",
         "format": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "iterator": "cpp",
+        "coroutine": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

@@ -3,13 +3,14 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
+#include <iterator>
 
 Game::Game(int num_players, int starting_chips, int small_blind, int big_blind)
     : btn_loc_(0)
     , current_player_(0)
-    , phase_(HandPhase::Phase::PREHAND)
     , small_blind_(small_blind)
-    , big_blind_(big_blind) {
+    , big_blind_(big_blind)
+    , action_awaiter_() {
 
     // Initialize players
     for (int i = 0; i < num_players; i++) {
@@ -23,7 +24,6 @@ Game::Game(int num_players, int starting_chips, int small_blind, int big_blind)
 }
 
 void Game::startHand(int btn_loc) {
-
     // Reset game state
     board_.clear();
     for (auto& player : players_) {
@@ -43,11 +43,18 @@ void Game::startHand(int btn_loc) {
     } else {
         _moveBlinds();
     }
-    _dealCards();
-    _postPlayerBets(btn_loc_, small_blind_);
-    _postPlayerBets(btn_loc_ + 1, big_blind_);
 
-    phase_ = HandPhase::Phase::PREFLOP;
+    // Set blind positions
+    sb_loc_ = (btn_loc_ + 1) % players_.size();
+    bb_loc_ = (sb_loc_ + 1) % players_.size();
+
+    _dealCards();
+    _postPlayerBets(sb_loc_, small_blind_);
+    _postPlayerBets(bb_loc_, big_blind_);
+
+    // Set initial player to act (UTG - first after BB)
+    current_player_ = (bb_loc_ + 1) % players_.size();
+    phase_machine_.setPhase(HandPhase::Phase::PREFLOP);
 }
 
 /**************************************************
@@ -336,7 +343,7 @@ void Game::_settleHand() {
 
 void Game::_takeAction(Action action) {
     if (action.getActionType() == ActionType::ALL_IN) {
-        auto new_action = _translateAllIn(action);
+        action = _translateAllIn(action);
     }
 
     int player_amount = players_[current_player_]->getChips();
@@ -359,46 +366,164 @@ void Game::_takeAction(Action action) {
 
 }
 
-void Game::_bettingRound(HandPhase::Phase phase) {
-    int new_cards = HandPhase::getNewCards(phase_);
+BettingRoundCoroutine Game::_bettingRound(HandPhase::Phase phase) {
+    // Add new cards to the board based on the phase
+    int new_cards = HandPhase::getNewCards(phase);
     if (new_cards > 0) {
         auto cards = deck_.draw(new_cards);
         board_.insert(board_.end(), cards.begin(), cards.end());
     }
 
+    // Reset betting state for this round
     int first_pot_idx = pots_.size() - 1;
-
     last_raise_ = 0;
     raise_option_ = true;
 
-    current_player_ = btn_loc_ + 1;
-    if (phase_ == HandPhase::Phase::PREFLOP) {
-        current_player_ = bb_loc_ + 1;
-    }
-    auto active_players = getActivePlayers();
-    auto start_it = std::find(active_players.begin(), active_players.end(), current_player_);
-    std::deque<int> player_queue;
-    if (start_it != active_players.end()) {
-        player_queue.insert(player_queue.end(), start_it, active_players.end());
-        player_queue.insert(player_queue.end(), active_players.begin(), start_it);
-    }
+    // Set initial player position
+    // For preflop, first player is after BB
+    // For all other rounds, first player is after button
+    current_player_ = (phase == HandPhase::Phase::PREFLOP)
+        ? (bb_loc_ + 1) % players_.size()
+        : (btn_loc_ + 1) % players_.size();
 
-    
+    // Get initial queue of active players
+    auto active_players = _player_iter(current_player_);
+    std::deque<int> player_queue(active_players.begin(), active_players.end());
 
     while (!isHandOver()) {
-        // WSOP 2021 Rule 96
-        // if no more active players that can raise continue with the players to call
-        // while disabling the raise availability.
+        // WSOP 2021 Rule 96:
+        // If no more active players can raise, continue with players who need to call
+        // while disabling the raise availability
+        if (player_queue.empty()) {
+            auto to_call_players = _player_iter(
+                current_player_ + 1,
+                false,
+                { PlayerState::TO_CALL }
+            );
+            player_queue = std::deque<int>(to_call_players.begin(), to_call_players.end());
 
+            if (player_queue.empty()) {
+                break;
+            }
+            raise_option_ = false;
+        }
+
+        // Store previous raise amount for Rule 96
+        int prev_raised = last_raise_;
+
+        // Set current player and process their action
+        current_player_ = player_queue.front();
+        player_queue.pop_front();
+
+        // Suspend execution until takeAction is called
+        Action action = co_await action_awaiter_;
+
+        // If a raise occurred, everyone eligible gets another action
+        if (!action_history_.empty() && action_history_.back().getActionType() == ActionType::RAISE) {
+            int raise_amount = action_history_.back().getAmount();
+
+            // WSOP Rule 96: An all-in raise less than the previous raise shall not reopen
+            // the bidding unless two or more such all-in raises total greater than or equal
+            // to the previous raise
+            int all_in_raise_sum = 0;
+            for (auto it = action_history_.rbegin(); it != action_history_.rend(); ++it) {
+                if (players_[it->getPlayerId()]->isAllIn() &&
+                    it->getActionType() == ActionType::RAISE) {
+                    all_in_raise_sum += it->getAmount();
+                } else if (!players_[it->getPlayerId()]->isAllIn()) {
+                    break;
+                }
+            }
+
+            if (raise_amount < prev_raised) {
+                if (all_in_raise_sum < prev_raised) {
+                    continue;
+                }
+                // Exception for rule 96
+                last_raise_ = all_in_raise_sum;
+            }
+
+            // Reset the round (as if betting round started here)
+            auto new_active_players = _player_iter(current_player_);
+            player_queue = std::deque<int>(new_active_players.begin(), new_active_players.end());
+
+            // Remove current player from queue if they're not all-in
+            if (!players_[current_player_]->isAllIn() && !player_queue.empty()) {
+                player_queue.pop_front();
+            }
+        }
+    }
+
+    // Consolidate betting for all pots in this betting round
+    for (size_t i = first_pot_idx; i < pots_.size(); i++) {
+        pots_[i]->collect_bets();
     }
 }
+
+
+std::vector<int> Game::_player_iter(
+        std::optional<int> loc,
+        bool reverse,
+        std::vector<PlayerState> match_states,
+        std::vector<PlayerState> filter_states) {
+
+    // Get starting location (default to current player if not specified)
+    int start_loc = loc.value_or(current_player_);
+
+    // Set up iteration range
+    int start = start_loc;
+    int stop = start_loc + players_.size();
+    int step = 1;
+
+    if (reverse) {
+        std::swap(start, stop);
+        step = -1;
+    }
+
+    // Collect valid player IDs
+    std::vector<int> valid_players;
+    for (int i = start; i != stop; i += step) {
+        int player_idx = i % players_.size();
+
+        // Check if player state matches criteria
+        PlayerState state = players_[player_idx]->getState();
+
+        // Skip if state is in filter_states
+        if (std::find(filter_states.begin(), filter_states.end(), state)
+            != filter_states.end()) {
+            continue;
+        }
+
+        // Skip if match_states is not empty and state is not in match_states
+        if (!match_states.empty() &&
+            std::find(match_states.begin(), match_states.end(), state)
+            == match_states.end()) {
+            continue;
+        }
+
+        valid_players.push_back(player_idx);
+    }
+
+    return valid_players;
+}
+
 /**************************************************
  * Public methods
  **************************************************/
 
 void Game::takeAction(Action action) {
+    if (!_isValidAction(action)) {
+        throw std::invalid_argument("Invalid action");
+    }
 
     _handleAction(action);
+    action_history_.push_back(action);
+
+    // Resume the betting round coroutine if it exists
+    if (current_betting_round_) {
+        action_awaiter_.action = action;
+        current_betting_round_.resume();
+    }
 
     // Check if betting round is complete
     bool round_complete = true;
@@ -408,44 +533,40 @@ void Game::takeAction(Action action) {
             break;
         }
     }
-    int active_count = 0;
-    for (const auto& player : players_) {
-        if (player->isActive() && !player->isAllIn()) {
-            active_count++;
-        }
-    }
-    bool hand_over = active_count <= 1;
 
+    bool hand_over = isHandOver();
     if (round_complete || hand_over) {
-        // Collect bets and move to next phase
+        // Clean up current betting round
+        if (current_betting_round_) {
+            current_betting_round_.destroy();
+            current_betting_round_ = nullptr;
+        }
+
+        // Collect bets from all pots
         for (auto& pot : pots_) {
             pot->collect_bets();
         }
 
-        phase_ = HandPhase::getNextPhase(phase_);
+        // Use state machine to handle phase transition
+        phase_machine_.transition(round_complete, hand_over);
 
-        // Deal community cards if needed
-        int new_cards = HandPhase::getNewCards(phase_);
-        if (new_cards > 0) {
-            auto cards = deck_.draw(new_cards);
-            board_.insert(board_.end(), cards.begin(), cards.end());
+        // Start new betting round if needed
+        if (phase_machine_.getCurrentPhase() != HandPhase::Phase::SETTLE) {
+            auto betting_round = _bettingRound(phase_machine_.getCurrentPhase());
+            current_betting_round_ = betting_round.handle;
+        } else {
+            _settleHand();
         }
-        for (const auto& player : players_) {
-            if (player->getState() == PlayerState::IN) {
-                player->setState(PlayerState::TO_CALL);
-            }
-        }
-
-        // Reset current player to first active player after button
-        current_player_ = getNextActivePlayer(btn_loc_);
     }
 }
 
-std::vector<int> Game::getActivePlayers() const {
+std::vector<int> Game::getActivePlayers(int loc) const {
     std::vector<int> active;
+
     for (size_t i = 0; i < players_.size(); i++) {
-        if (players_[i]->isActive()) {
-            active.push_back(i);
+        size_t idx = (i + loc) % players_.size();
+        if (players_[idx]->isActive()) {
+            active.push_back(idx);
         }
     }
     return active;
@@ -462,18 +583,54 @@ int Game::getNextActivePlayer(int from) const {
     return next;
 }
 
-bool Game::isHandComplete() const {
-    return phase_ == HandPhase::Phase::SETTLE;
-}
+// bool Game::isHandComplete() const {
+//     return phase_ == HandPhase::Phase::SETTLE;
+// }
 
 bool Game::isHandOver() const {
+    // Hand is over if:
+    // 1. Only one active player remains (everyone else folded)
+    // 2. We've reached showdown (river betting complete)
+    // 3. Everyone is all-in
+
+    if (phase_machine_.getCurrentPhase() == HandPhase::Phase::SETTLE) {
+        return true;
+    }
+
     int active_count = 0;
+    int all_in_count = 0;
     for (const auto& player : players_) {
         if (player->isActive() && !player->isAllIn()) {
             active_count++;
         }
+        if (player->isAllIn()) {
+            all_in_count++;
+        }
     }
-    return active_count <= 1;
+
+    // Only one active player (rest folded)
+    if (active_count <= 1) {
+        return true;
+    }
+
+    // Everyone is either all-in or folded
+    if (active_count == 0 && all_in_count > 0) {
+        return true;
+    }
+
+    // Reached showdown
+    if (phase_machine_.getCurrentPhase() == HandPhase::Phase::RIVER && active_count > 0) {
+        bool betting_complete = true;
+        for (const auto& player : players_) {
+            if (player->getState() == PlayerState::TO_CALL) {
+                betting_complete = false;
+                break;
+            }
+        }
+        return betting_complete;
+    }
+
+    return false;
 }
 
 float Game::getPayoff(int player_idx) const {
@@ -491,7 +648,7 @@ void Game::printState() const {
     std::cout << "\n=== Game State ===\n";
 
     // Print phase
-    std::cout << "Phase: " << phaseToString(phase_) << "\n";
+    std::cout << "Phase: " << phaseToString(phase_machine_.getCurrentPhase()) << "\n";
 
     // Print board
     std::cout << "Board: ";
