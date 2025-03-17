@@ -26,3 +26,11 @@ I also wanted to learn more about poker theory and deep learning in general, so 
 - [ ] Make general game interface for AI to use
 - [ ] Make an engine to play against the AI
 - [ ] Adjust game engine to be thread safe
+
+# Contributing
+
+to start
+`git clone https://github.com/dylan-almonte/poker-ai`
+
+Make a branch to start developing
+`git checkout -b <branchname>`
