@@ -139,6 +139,7 @@ public:
     void startHand(int btn_loc = -1);
     void takeAction(Action action);
     bool isHandOver() const;
+    bool isHandComplete() const;
     
     // Getters
     const std::vector<Card>& getBoard() const { return board_; }

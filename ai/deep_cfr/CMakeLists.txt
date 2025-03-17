@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(deep_cfr)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find LibTorch package - specify path for M1 Mac if needed
@@ -64,5 +64,5 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
     )
 endif()
 
-set_property(TARGET deep_cfr PROPERTY CXX_STANDARD 17)
+# set_property(TARGET deep_cfr PROPERTY CXX_STANDARD 17)
 

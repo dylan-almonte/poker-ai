@@ -513,6 +513,7 @@ std::vector<int> Game::_player_iter(
 
 void Game::takeAction(Action action) {
     if (!_isValidAction(action)) {
+        printState();
         throw std::invalid_argument("Invalid action");
     }
 
@@ -583,9 +584,9 @@ int Game::getNextActivePlayer(int from) const {
     return next;
 }
 
-// bool Game::isHandComplete() const {
-//     return phase_ == HandPhase::Phase::SETTLE;
-// }
+bool Game::isHandComplete() const {
+    return phase_machine_.getCurrentPhase() == HandPhase::Phase::SETTLE;
+}
 
 bool Game::isHandOver() const {
     // Hand is over if:

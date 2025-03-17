@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(PokerAI)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add the engine subdirectory
-add_subdirectory("engine")
+add_subdirectory(engine)
 add_subdirectory(ai/deep_cfr)
 
 # Create your executable
@@ -25,7 +25,7 @@ set_target_properties(poker_ai PROPERTIES
 
 # Add the -Wno-unused-variable flag
 # target_compile_options(poker_ai PUBLIC -g)
-
+add_compile_options(-g -Wall -Wextra -Wno-unused-variable)
 # # Enable testing
 # enable_testing()
 
