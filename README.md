@@ -34,3 +34,27 @@ to start
 
 Make a branch to start developing
 `git checkout -b <branchname>`
+
+## Instructions for Andy
+
+1. to download the repo
+`git clone https://github.com/dylan-almonte/poker-ai`
+
+2. change to the engine branch
+`git checkout engine`
+
+3. create a new branch with your username/ and what your working on (this will branch off of engine)
+`git checkout -b <username>/<feature>`
+like this
+`git checkout -b dcabahug/engine`
+
+5. push your branch to the remote repo
+`git push -u origin <branch name>`
+this is the same branch name you made in prev step
+example:
+`git push -u origin dcabahug/engine`
+
+6. you can start working now
+
+to build your code, ask chat to make the run.sh files into .bat files
+
