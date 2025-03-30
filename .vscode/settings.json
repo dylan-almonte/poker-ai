@@ -73,7 +73,8 @@
         "format": "cpp",
         "cinttypes": "cpp",
         "iterator": "cpp",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "mdspan": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }
