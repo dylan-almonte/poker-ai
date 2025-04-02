@@ -9,4 +9,14 @@ enum class PlayerState {
     ALL_IN   // Player is all-in, no more actions possible
 };
 
-std::string playerStateToString(PlayerState state); 
+std::string playerStateToString(PlayerState state) {
+    switch (state) {
+        case PlayerState::SKIP: return "SKIP";
+        case PlayerState::OUT: return "OUT";
+        case PlayerState::IN: return "IN";
+        case PlayerState::TO_CALL: return "TO_CALL";
+        case PlayerState::ALL_IN: return "ALL_IN";
+        default: return "UNKNOWN";
+    }
+} 
+

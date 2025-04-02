@@ -9,8 +9,6 @@ enum class ActionType {
     FOLD    // Folds the hand and exits the pot
 };
 
-std::string actionTypeToString(ActionType type); 
-
 class Action {
 private:
     ActionType action_type_;
@@ -33,3 +31,14 @@ public:
     int getPlayerId() const { return player_id_; }
     int getAmount() const { return amount_; }   
 };
+
+std::string actionTypeToString(ActionType type) {
+    switch (type) {
+        case ActionType::RAISE: return "RAISE";
+        case ActionType::ALL_IN: return "ALL_IN";
+        case ActionType::CALL: return "CALL";
+        case ActionType::CHECK: return "CHECK";
+        case ActionType::FOLD: return "FOLD";
+        default: return "UNKNOWN";
+    }
+} 
