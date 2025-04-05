@@ -53,21 +53,21 @@ public:
     }
 }; 
 
+// A circular linked list of players
 class PlayerList {
 private:
     struct PlayerNode {
-        std::shared_ptr<Player> player;
+        int id;
         PlayerNode* next;
         PlayerNode* prev;
     };
-
+    std::unordered_map<int, PlayerNode*> player_map;
     PlayerNode* current;
 public:
     
 
     PlayerList(std::vector<std::shared_ptr<Player>> players, int starting_player) {
         current = new PlayerNode();
-        current->player = players[starting_player];
         current->next = nullptr;
         current->prev = nullptr;
     }

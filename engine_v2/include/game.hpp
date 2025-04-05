@@ -25,7 +25,19 @@ private:
     
 
 
-    void _dealCards();
+    void _dealCards() {
+        deck_ = Deck(); // New shuffled deck
+
+        // Deal 2 cards to each player
+        for (int i = 0; i < 2; i++) {
+            for (auto& player : players_) {
+                if (player->getState() != PlayerState::SKIP) {
+                    auto cards = deck_.draw(1);
+                    player->addCard(cards[0]);
+                }
+                }
+            }
+    }
     void _postPlayerBets(int player_idx, int amount);
     void _splitPot(int pot_idx, int raise_level);
     void _moveBlinds();

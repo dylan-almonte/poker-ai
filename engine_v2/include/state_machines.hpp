@@ -23,12 +23,10 @@
 class BettingRound {
     private:
         std::vector<std::shared_ptr<Player>> players_;
-        std::deque<std::shared_ptr<Player>> active_players_;
         std::vector<std::shared_ptr<Pot>> pots_;
-        int starting_player_;
+        std::deque<int> active_players_;
         int current_player_;
-        int last_raiser_;
-        int last_raise_ = 0;
+        int last_to_act_;
         
         void _move_to_next_player() {
             do {
@@ -59,7 +57,6 @@ class BettingRound {
             pots_[last_pot_idx]->player_post(player_idx, amount);
 
             int last_raise = pots_[last_pot_idx]->get_raised() - prev_raise_level;
-            last_raise = std::max(last_raise, last_raise_);
 
             auto pot_players = pots_[last_pot_idx]->players_in_pot();
 
@@ -81,9 +78,8 @@ class BettingRound {
             }
             if (all_in_exists) {
                 int new_raise_level = INT_MAX;
-                auto active_players = _get_active_players();
                 auto last_pot = pots_[last_pot_idx];
-                for (int pot_player_id : active_players) {
+                for (int pot_player_id : active_players_) {
                     if (last_pot->get_player_amount(pot_player_id) > new_raise_level) {
                         new_raise_level = std::min(new_raise_level, last_pot->get_player_amount(pot_player_id));
                     }
@@ -117,15 +113,6 @@ class BettingRound {
             }
         }
 
-        std::vector<int> _get_active_players() {
-            std::vector<int> active_players;
-            for (int i = 0; i < players_.size(); i++) {
-                if (players_[i]->isActive()) {
-                    active_players.push_back(i);
-                }
-            }
-            return active_players;
-        }
 
         bool _valid_action(Action action) {
             auto player = players_[current_player_];
@@ -154,9 +141,6 @@ class BettingRound {
         }
         
         void _handle_action(Action action) {
-            if (!_valid_action(action)) {
-                throw std::invalid_argument("Invalid action");
-            }
             auto player = players_[current_player_];
             auto current_pot = pots_.back();
             action = _translate_all_in(action);
@@ -164,7 +148,7 @@ class BettingRound {
 
             switch (action.getActionType()) {
             case ActionType::FOLD:
-                active_players_.erase(std::find(active_players_.begin(), active_players_.end(), player));
+                active_players_.erase(std::find(active_players_.begin(), active_players_.end(), current_player_));
                 player->setState(PlayerState::OUT);
                 break;
             case ActionType::CHECK:
@@ -179,7 +163,7 @@ class BettingRound {
             case ActionType::RAISE:
                 player->setChips(player->getChips() - action.getAmount());
                 _post_player_bets(current_player_, action);
-                
+                last_to_act_ = current_player_;
                 player->setState(PlayerState::IN);
                 break;
             case ActionType::ALL_IN:
@@ -210,14 +194,15 @@ class BettingRound {
         }
 
     public:
-        BettingRound(std::vector<std::shared_ptr<Player>> players, std::vector<std::shared_ptr<Pot>> pots, int starting_player, int current_player) 
-                    : players_(players), pots_(pots), starting_player_(starting_player), current_player_(current_player) 
+        BettingRound(std::vector<std::shared_ptr<Player>> players, 
+                     std::vector<std::shared_ptr<Pot>> pots, 
+                     int last_to_act) : players_(players), pots_(pots), last_to_act_(last_to_act)  
             {
                 size_t num_players = players_.size();
                 for (size_t i = 0; i < num_players; i++) {
-                    auto player = players_[(i + starting_player_) % num_players];
+                    auto player = players_[(i + last_to_act_ + 1) % num_players];
                     if (player->isActive()) {
-                        active_players_.emplace_back(player);
+                        active_players_.emplace_back(i);
                     }
                 }
             }
@@ -227,7 +212,7 @@ class BettingRound {
             _handle_action(action);
             _move_to_next_player();
             
-            return true;
+            return current_player_ == last_to_act_;
         }
 
         int chipsToCall(int player_id) {
