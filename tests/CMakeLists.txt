@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 add_subdirectory(
-    ${CMAKE_CURRENT_SOURCE_DIR}/../engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/../engine_v2
     ${CMAKE_BINARY_DIR}/engine           
 )
 # Enable testing
