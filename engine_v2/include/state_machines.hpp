@@ -4,39 +4,50 @@
 #include "deck.hpp"
 #include "hand_phase.hpp"
 #include "action.hpp"
+#include "game_state.hpp"
 #include <functional>
+#include <deque>
+#include <unordered_map>
 
-class HandPhaseStateMachine {
-    private:
-        HandPhase::Phase current_phase_;
-        std::function<void(HandPhase::Phase)> on_transition_;
-        
-};
+#ifdef DEBUG
+#define DEBUG_PRINT(x) std::cout << x << std::endl;
+#define VALIDATE_ACTION(action) if (!_valid_action(action)) { throw std::invalid_argument("Invalid action"); }
+#else
+#define DEBUG_PRINT(x)
+#define VALIDATE_ACTION(action)
+#endif
+
+
+
 
 class BettingRound {
     private:
         std::vector<std::shared_ptr<Player>> players_;
+        std::deque<std::shared_ptr<Player>> active_players_;
         std::vector<std::shared_ptr<Pot>> pots_;
         int starting_player_;
-        int last_raise_;
+        int current_player_;
+        int last_raiser_;
+        int last_raise_ = 0;
         
         void _move_to_next_player() {
             do {
-                starting_player_ = (starting_player_ + 1) % players_.size();
-            } while (!players_[starting_player_]->isActive());
+                current_player_ = (current_player_ + 1) % players_.size();
+            } while (!players_[current_player_]->isActive());
         }
         
-        void _post_player_bets(int player_idx, int amount) {
-
-            amount = std::min(amount, players_[player_idx]->getChips());
+        void _post_player_bets(int player_idx, Action action) {
+            auto player = players_[player_idx];
+            
+            int amount = std::min(action.getAmount(), player->getChips());
             int original_amount = amount;
-            int last_pot_idx = players_[player_idx]->getLastPot();
+            int last_pot_idx = player->getLastPot();
 
             // if a player posts, they are in the pot
-            if (amount == players_[player_idx]->getChips()) {
-                players_[player_idx]->setState(PlayerState::ALL_IN);
+            if (amount == player->getChips()) {
+                player->setState(PlayerState::ALL_IN);
             } else {
-                players_[player_idx]->setState(PlayerState::IN);
+                player->setState(PlayerState::IN);
             }
 
             for (int i = 0; i < last_pot_idx; i++) {
@@ -116,12 +127,108 @@ class BettingRound {
             return active_players;
         }
 
+        bool _valid_action(Action action) {
+            auto player = players_[current_player_];
+            auto current_pot = pots_.back();
+            int to_call = current_pot->chips_to_call(current_player_);
+            
+            switch (action.getActionType()) {
+            case ActionType::FOLD:
+                return true;
+
+            case ActionType::CHECK:
+                return to_call == 0;
+
+            case ActionType::CALL:
+                return to_call >= 0 && to_call <= player->getChips();
+
+            case ActionType::RAISE:
+                return action.getAmount() > to_call && action.getAmount() <= player->getChips();
+
+            case ActionType::ALL_IN:
+                return player->getChips() > 0;
+
+            default:
+                return false;
+            }
+        }
+        
+        void _handle_action(Action action) {
+            if (!_valid_action(action)) {
+                throw std::invalid_argument("Invalid action");
+            }
+            auto player = players_[current_player_];
+            auto current_pot = pots_.back();
+            action = _translate_all_in(action);
+
+
+            switch (action.getActionType()) {
+            case ActionType::FOLD:
+                active_players_.erase(std::find(active_players_.begin(), active_players_.end(), player));
+                player->setState(PlayerState::OUT);
+                break;
+            case ActionType::CHECK:
+                player->setState(PlayerState::IN);
+                break;
+            case ActionType::CALL:
+                int to_call = current_pot->chips_to_call(current_player_);
+                player->setChips(player->getChips() - to_call);
+                _post_player_bets(current_player_, {ActionType::CALL, to_call}); 
+                player->setState(PlayerState::IN);
+                break;
+            case ActionType::RAISE:
+                player->setChips(player->getChips() - action.getAmount());
+                _post_player_bets(current_player_, action);
+                
+                player->setState(PlayerState::IN);
+                break;
+            case ActionType::ALL_IN:
+                int chips = player->getChips();
+                player->setChips(0);
+                _post_player_bets(current_player_, {ActionType::ALL_IN, chips});
+                player->setState(PlayerState::ALL_IN);
+                break;
+            }
+        }
+
+        Action _translate_all_in(Action action) {
+            const auto& player = players_[current_player_];
+            if (action.getActionType() != ActionType::ALL_IN) {
+                return action;
+            }
+            auto current_pot = pots_.back();
+            int to_call = current_pot->chips_to_call(current_player_);
+
+            if (player->getChips() <= to_call) {
+                return { ActionType::CALL, 0 };
+            }
+
+            return {
+                ActionType::RAISE,
+                player->getChips()
+            };
+        }
+
     public:
-        BettingRound(std::vector<std::shared_ptr<Player>> players, std::vector<std::shared_ptr<Pot>> pots, int starting_player ) 
-                    : players_(players), pots_(pots), starting_player_(starting_player) {}
-        void handleAction(Action action);
-        void handleRoundComplete(bool last_round, bool all_in);
-        void handleHandOver();
+        BettingRound(std::vector<std::shared_ptr<Player>> players, std::vector<std::shared_ptr<Pot>> pots, int starting_player, int current_player) 
+                    : players_(players), pots_(pots), starting_player_(starting_player), current_player_(current_player) 
+            {
+                size_t num_players = players_.size();
+                for (size_t i = 0; i < num_players; i++) {
+                    auto player = players_[(i + starting_player_) % num_players];
+                    if (player->isActive()) {
+                        active_players_.emplace_back(player);
+                    }
+                }
+            }
+
+        bool handleAction(Action action) {
+            VALIDATE_ACTION(action);
+            _handle_action(action);
+            _move_to_next_player();
+            
+            return true;
+        }
 
         int chipsToCall(int player_id) {
             int to_call = 0;

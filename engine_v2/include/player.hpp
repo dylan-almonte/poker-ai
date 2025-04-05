@@ -5,6 +5,9 @@
 #include "card.hpp"
 #include "player_state.hpp"
 
+
+
+
 class Player {
 private:
     int id_;
@@ -50,5 +53,32 @@ public:
     }
 }; 
 
+class PlayerList {
+private:
+    struct PlayerNode {
+        std::shared_ptr<Player> player;
+        PlayerNode* next;
+        PlayerNode* prev;
+    };
 
+    PlayerNode* current;
+public:
+    
+
+    PlayerList(std::vector<std::shared_ptr<Player>> players, int starting_player) {
+        current = new PlayerNode();
+        current->player = players[starting_player];
+        current->next = nullptr;
+        current->prev = nullptr;
+    }
+
+    void pop() {
+        auto next = current->next;
+        current->next = nullptr;
+        current->prev = nullptr;
+        current = next;
+    }
+
+    
+};
 
