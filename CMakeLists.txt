@@ -1,11 +1,12 @@
+
 cmake_minimum_required(VERSION 3.10)
 project(PokerAI)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add the engine subdirectory
-add_subdirectory(engine)
+add_subdirectory("engine")
 add_subdirectory(ai/deep_cfr)
 
 # Create your executable
@@ -25,7 +26,7 @@ set_target_properties(poker_ai PROPERTIES
 
 # Add the -Wno-unused-variable flag
 # target_compile_options(poker_ai PUBLIC -g)
-add_compile_options(-g -Wall -Wextra -Wno-unused-variable)
+
 # # Enable testing
 # enable_testing()
 
@@ -35,14 +36,14 @@ add_compile_options(-g -Wall -Wextra -Wno-unused-variable)
 #     googletest
 #     GIT_REPOSITORY https://github.com/google/googletest.git
 #     GIT_TAG release-1.11.0
-# )
+)
 # FetchContent_MakeAvailable(googletest)
 
 # # Create test executable
 # add_executable(engine_tests
 #     tests/engine/game_test.cpp
 #     # Add other test files here
-# )
+)
 
 # # Link against gtest and your engine library
 # target_link_libraries(engine_tests
@@ -50,4 +51,4 @@ add_compile_options(-g -Wall -Wextra -Wno-unused-variable)
 #     gtest
 #     gtest_main
 #     poker_engine  # Your engine library
-# )
+)

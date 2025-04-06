@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
                 std::cout << "  Updated game state:" << std::endl;
                 game.printState();
             }
-            // game.settleHand();
+            game.settleHand();
             // Print hand results
             std::cout << "\n=== Hand " << hand + 1 << " Results ===" << std::endl;
             for (const auto& player : game.getPlayers()) {
@@ -230,4 +230,5 @@ int main(int argc, char** argv) {
 
     std::cout << "Program completed successfully." << std::endl;
     return 0;
+
 } 
