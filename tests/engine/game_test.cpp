@@ -54,15 +54,15 @@ TEST_F(GameTest, ValidActionSequence) {
     ASSERT_EQ(game->getCurrentPlayer(), 3);
 
     // UTG calls
-    DEBUG_PRINT_GAME(game);
+    // DEBUG_PRINT_GAME(game);
     game->takeAction(Action(ActionType::CALL, 3, 10));
-    DEBUG_PRINT_GAME(game);
+    // DEBUG_PRINT_GAME(game);
     ASSERT_EQ(game->getPlayers()[3]->getChips(), 990);
 
     // MP raises
-    DEBUG_PRINT_GAME(game);
+    //  DEBUG_PRINT_GAME(game);
     game->takeAction(Action(ActionType::RAISE, 4, 30));
-    DEBUG_PRINT_GAME(game);
+    // DEBUG_PRINT_GAME(game);
     ASSERT_EQ(game->getPlayers()[4]->getChips(), 970);
 
     // Verify action history
@@ -72,102 +72,104 @@ TEST_F(GameTest, ValidActionSequence) {
     // ASSERT_EQ(history[1].getActionType(), ActionType::RAISE);
 }
 
-// TEST_F(GameTest, PlayerFolding) {
-//     game->startHand(0);
+TEST_F(GameTest, PlayerFolding) {
+    game->startHand(0);
 
-//     // Player 3 folds
-//     game->takeAction(Action(ActionType::FOLD, 3, 0));
+    // Player 3 folds
+    game->takeAction(Action(ActionType::FOLD, 3, 0));
 
-//     // Verify player state
-//     ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::OUT);
-//     ASSERT_FALSE(game->getPlayers()[3]->isActive());
+    // Verify player state
+    ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::OUT);
+    ASSERT_FALSE(game->getPlayers()[3]->isActive());
 
-//     // Verify next active player
-//     ASSERT_EQ(game->getCurrentPlayer(), 4);
-// }
+    // Verify next active player
+    ASSERT_EQ(game->getCurrentPlayer(), 4);
+}
 
-// TEST_F(GameTest, AllInAction) {
-//     game->startHand(0);
+TEST_F(GameTest, AllInAction) {
+    game->startHand(0);
 
-//     // Player 3 goes all-in
-//     game->takeAction(Action(ActionType::ALL_IN));
+    // Player 3 goes all-in
+    game->takeAction(Action(ActionType::ALL_IN));
 
-//     // Verify player state and chips
-//     ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
-//     ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
-//     ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
-// }
+    // Verify player state and chips
+    ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
+    ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
+    ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
+}
 
-// TEST_F(GameTest, HandProgression) {
-//     game->startHand(0);
+TEST_F(GameTest, HandProgression) {
+    game->startHand(0);
 
-//     // Simulate all players calling
-//     for (int i = 3; i <= 5; i++) {
-//         game->takeAction(Action(ActionType::CALL));
-//     }
-//     game->takeAction(Action(ActionType::CALL));
-//     game->takeAction(Action(ActionType::CALL));  // SB completes
-//     game->takeAction(Action(ActionType::CHECK));  // BB checks
-//     // Should now be on the flop
-//     ASSERT_EQ(game->getPhase(), HandPhase::FLOP);
-//     ASSERT_EQ(game->getBoard().size(), 3);
-//     for (int i = 0; i < 6; i++) {
-//         game->takeAction(Action(ActionType::CHECK));
-//     }
-//     ASSERT_EQ(game->getPhase(), HandPhase::TURN);
-//     ASSERT_EQ(game->getBoard().size(), 4);
-//     game->takeAction(Action(ActionType::CHECK));
+    // Simulate all players calling
+    for (int i = 3; i <= 5; i++) {
+        game->takeAction(Action(ActionType::CALL));
+    }
+    game->takeAction(Action(ActionType::CALL));
+    game->takeAction(Action(ActionType::CALL));  // SB completes
+    DEBUG_PRINT_GAME(game);
+    game->takeAction(Action(ActionType::CHECK));  // BB checks
+    // Should now be on the flop
+    DEBUG_PRINT_GAME(game);
+    ASSERT_EQ(game->getPhase(), HandPhase::FLOP);
+    ASSERT_EQ(game->getBoard().size(), 3);
+    for (int i = 0; i < 6; i++) {
+        game->takeAction(Action(ActionType::CHECK));
+    }
+    ASSERT_EQ(game->getPhase(), HandPhase::TURN);
+    ASSERT_EQ(game->getBoard().size(), 4);
+    game->takeAction(Action(ActionType::CHECK));
 
-// }
+}
 
-// // TEST_F(GameTest, ALL_IN_ACTION) {
-// //     headsup_game->startHand(0);
-// //     // DEBUG_PRINT_GAME(headsup_game);
-// //     headsup_game->takeAction(Action(ActionType::ALL_IN));
-// //     DEBUG_PRINT_GAME(headsup_game);
-//     headsup_game->takeAction(Action(ActionType::ALL_IN));
-//     DEBUG_PRINT_GAME(headsup_game);
+TEST_F(GameTest, ALL_IN_ACTION) {
+    headsup_game->startHand(0);
+    // DEBUG_PRINT_GAME(headsup_game);
+    headsup_game->takeAction(Action(ActionType::ALL_IN));
+    // DEBUG_PRINT_GAME(headsup_game);
+    headsup_game->takeAction(Action(ActionType::ALL_IN));
+    //  DEBUG_PRINT_GAME(headsup_game);
 
-//     // ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
-//     // ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
-//     // ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
-// }
+    // ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
+    // ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
+    // ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
+}
 
 
-// TEST_F(GameTest, SettleHandWithAllInPlayers) {
-//     // Setup a game with 3 players
-//     Game tmp_game(3, 1000, 10, 20);
+TEST_F(GameTest, SettleHandWithAllInPlayers) {
+    // Setup a game with 3 players
+    Game tmp_game(3, 1000, 10, 20);
 
-//     // Start hand and force some specific cards for testing
-//     tmp_game.startHand(0);  // Player 0 is button
-//     tmp_game.printState();
+    // Start hand and force some specific cards for testing
+    tmp_game.startHand(0);  // Player 0 is button
+    tmp_game.printState();
 
-//     // Simulate preflop action - everyone all in
-//     tmp_game.takeAction(Action(ActionType::ALL_IN, 1000)); // UTG goes all-in
-//     tmp_game.printState();
-//     tmp_game.takeAction(Action(ActionType::ALL_IN, 1000)); // BTN calls
-//     tmp_game.printState();
-//     tmp_game.takeAction(Action(ActionType::ALL_IN, 1000)); // BB calls
-//     tmp_game.printState();
-//     // Verify hand is complete
-//     // ASSERT_TRUE(tmp_game.isHandOver());
+    // Simulate preflop action - everyone all in
+    tmp_game.takeAction(Action(ActionType::ALL_IN)); // UTG goes all-in
+    tmp_game.printState();
+    tmp_game.takeAction(Action(ActionType::ALL_IN)); // BTN calls
+    tmp_game.printState();
+    tmp_game.takeAction(Action(ActionType::ALL_IN)); // BB calls
+    tmp_game.printState();
+    // Verify hand is complete
+    // ASSERT_TRUE(tmp_game.isHandOver());
 
-//     // // Settle the hand
-//     // tmp_game.settleHand();
+    // // Settle the hand
+    // tmp_game.settleHand();
 
-//     // // Verify:
-//     // // 1. All chips are accounted for (total should be 3000)
-//     // int total_chips = 0;
-//     // for (const auto& player : tmp_game.getPlayers()) {
-//     //     total_chips += player->getChips();
-//     // }
-//     // EXPECT_EQ(total_chips, 3000);
+    // // Verify:
+    // // 1. All chips are accounted for (total should be 3000)
+    // int total_chips = 0;
+    // for (const auto& player : tmp_game.getPlayers()) {
+    //     total_chips += player->getChips();
+    // }
+    // EXPECT_EQ(total_chips, 3000);
 
-//     // // 2. Board should have exactly 5 cards
-//     // EXPECT_EQ(tmp_game.getBoard().size(), 5);
+    // // 2. Board should have exactly 5 cards
+    // EXPECT_EQ(tmp_game.getBoard().size(), 5);
 
-//     // // 3. All pots should be empty after settlement
-//     // for (const auto& pot : tmp_game.getPots()) {
-//     //     EXPECT_EQ(pot->get_total_amount(), 0);
-//     // }
-// }
+    // // 3. All pots should be empty after settlement
+    // for (const auto& pot : tmp_game.getPots()) {
+    //     EXPECT_EQ(pot->get_total_amount(), 0);
+    // }
+}
