@@ -8,7 +8,7 @@
 #include <functional>
 #include <deque>
 #include <unordered_map>
-
+#include <iostream>
 #ifdef DEBUG
 #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define VALIDATE_ACTION(action) if (!_valid_action(action)) { throw std::invalid_argument("Invalid action"); }
@@ -27,6 +27,7 @@ class BettingRound {
         std::deque<int> active_players_;
         int current_player_;
         int last_to_act_;
+        int all_in_count_ = 0;
         
         void _move_to_next_player() {
             do {
@@ -34,60 +35,7 @@ class BettingRound {
             } while (!players_[current_player_]->isActive());
         }
         
-        void _post_player_bets(int player_idx, Action action) {
-            auto player = players_[player_idx];
-            
-            int amount = std::min(action.getAmount(), player->getChips());
-            int original_amount = amount;
-            int last_pot_idx = player->getLastPot();
-
-            // if a player posts, they are in the pot
-            if (amount == player->getChips()) {
-                player->setState(PlayerState::ALL_IN);
-            } else {
-                player->setState(PlayerState::IN);
-            }
-
-            for (int i = 0; i < last_pot_idx; i++) {
-                amount = amount - pots_[i]->chips_to_call(player_idx);
-                pots_[i]->player_post(player_idx, pots_[i]->chips_to_call(player_idx));
-            }
-
-            int prev_raise_level = pots_[last_pot_idx]->get_raised();
-            pots_[last_pot_idx]->player_post(player_idx, amount);
-
-            int last_raise = pots_[last_pot_idx]->get_raised() - prev_raise_level;
-
-            auto pot_players = pots_[last_pot_idx]->players_in_pot();
-
-            // players previously in pot need to call in event of a raise
-            if (last_raise > 0) {
-                for (int pot_player_id : pot_players) {
-                    if (pots_[last_pot_idx]->chips_to_call(pot_player_id) > 0 && players_[pot_player_id]->getState() == PlayerState::IN) {
-                        players_[pot_player_id]->setState(PlayerState::TO_CALL);
-                    }
-                }
-            }
-
-            // if a player is all_in in this pot, split a new one off
-            bool all_in_exists = false;
-            for (int pot_player_id : pot_players) {
-                if (players_[pot_player_id]->getState() == PlayerState::ALL_IN) {
-                    all_in_exists = true;
-                }
-            }
-            if (all_in_exists) {
-                int new_raise_level = INT_MAX;
-                auto last_pot = pots_[last_pot_idx];
-                for (int pot_player_id : active_players_) {
-                    if (last_pot->get_player_amount(pot_player_id) > new_raise_level) {
-                        new_raise_level = std::min(new_raise_level, last_pot->get_player_amount(pot_player_id));
-                    }
-                }
-                _split_pot(last_pot_idx, new_raise_level);
-            }   
-            players_[player_idx]->setChips(players_[player_idx]->getChips() - original_amount);
-        }
+        
 
         void _split_pot(int pot_idx, int raise_level) {
             auto pot = pots_[pot_idx];
@@ -100,13 +48,13 @@ class BettingRound {
             // TODO: maybe optimize this
             pots_.insert(pots_.begin() + pot_idx + 1, std::make_shared<Pot>(split_pot));
 
-            for (int pot_player_id : pot_players) {
+            for (size_t pot_player_id : pot_players) {
                 if (pot->get_player_amount(pot_player_id) > raise_level) {
                     split_pot.player_post(pot_player_id, pot->get_player_amount(pot_player_id) - raise_level);
                 }
             }
 
-            for (int player_id = 0; player_id < players_.size(); player_id++) {
+            for (size_t player_id = 0; player_id < players_.size(); player_id++) {
                 if (players_[player_id]->isActive() && players_[player_id]->getChips() > chipsToCall(player_id)) {
                     players_[player_id]->setLastPot(pot_idx + 1);
                 }
@@ -145,7 +93,7 @@ class BettingRound {
             auto current_pot = pots_.back();
             action = _translate_all_in(action);
 
-
+            
             switch (action.getActionType()) {
             case ActionType::FOLD:
                 active_players_.erase(std::find(active_players_.begin(), active_players_.end(), current_player_));
@@ -154,22 +102,20 @@ class BettingRound {
             case ActionType::CHECK:
                 player->setState(PlayerState::IN);
                 break;
-            case ActionType::CALL:
+            case ActionType::CALL: {
                 int to_call = current_pot->chips_to_call(current_player_);
-                player->setChips(player->getChips() - to_call);
-                _post_player_bets(current_player_, {ActionType::CALL, to_call}); 
-                player->setState(PlayerState::IN);
+                post_player_bets(current_player_, to_call); 
                 break;
+            }
+    
             case ActionType::RAISE:
-                player->setChips(player->getChips() - action.getAmount());
-                _post_player_bets(current_player_, action);
+                post_player_bets(current_player_, action.getAmount());
                 last_to_act_ = current_player_;
-                player->setState(PlayerState::IN);
                 break;
             case ActionType::ALL_IN:
                 int chips = player->getChips();
                 player->setChips(0);
-                _post_player_bets(current_player_, {ActionType::ALL_IN, chips});
+                post_player_bets(current_player_, chips);
                 player->setState(PlayerState::ALL_IN);
                 break;
             }
@@ -194,25 +140,95 @@ class BettingRound {
         }
 
     public:
+        BettingRound() : players_(), pots_(), last_to_act_(-1) {}
         BettingRound(std::vector<std::shared_ptr<Player>> players, 
                      std::vector<std::shared_ptr<Pot>> pots, 
-                     int last_to_act) : players_(players), pots_(pots), last_to_act_(last_to_act)  
+                     int last_to_act) : players_(players), pots_(pots), last_to_act_(last_to_act) 
             {
                 size_t num_players = players_.size();
+                current_player_ = (last_to_act_ + 1) % num_players;
                 for (size_t i = 0; i < num_players; i++) {
                     auto player = players_[(i + last_to_act_ + 1) % num_players];
                     if (player->isActive()) {
                         active_players_.emplace_back(i);
                     }
                 }
+                
             }
+
+        void post_player_bets(int player_idx, int amount) {
+            auto player = players_[player_idx];
+            
+            amount = std::min(amount, player->getChips());
+            int original_amount = amount;
+            int last_pot_idx = player->getLastPot();
+
+            // if a player posts, they are in the pot
+            if (amount >= player->getChips()) {
+                player->setState(PlayerState::ALL_IN);
+                active_players_.erase(std::find(active_players_.begin(), active_players_.end(), player_idx));
+                all_in_count_++;
+            } else {
+                player->setState(PlayerState::IN);
+            }
+
+            for (int i = 0; i < last_pot_idx; i++) {
+                amount = amount - pots_[i]->chips_to_call(player_idx);
+                pots_[i]->player_post(player_idx, pots_[i]->chips_to_call(player_idx));
+            }
+
+            int prev_raise_level = pots_[last_pot_idx]->get_raised();
+            pots_[last_pot_idx]->player_post(player_idx, amount);
+
+            int last_raise = pots_[last_pot_idx]->get_raised() - prev_raise_level;
+
+            auto pot_players = pots_[last_pot_idx]->players_in_pot();
+
+            // players previously in pot need to call in event of a raise
+            if (last_raise > 0) {
+                for (int pot_player_id : pot_players) {
+                    if (pots_[last_pot_idx]->chips_to_call(pot_player_id) > 0 && players_[pot_player_id]->getState() == PlayerState::IN) {
+                        players_[pot_player_id]->setState(PlayerState::TO_CALL);
+                    }
+                }
+            }
+
+            // if a player is all_in in this pot, split a new one off
+            bool all_in_exists = false;
+            for (int pot_player_id : pot_players) {
+                if (players_[pot_player_id]->getState() == PlayerState::ALL_IN) {
+                    all_in_exists = true;
+                }
+            }
+            if (all_in_exists) {
+                int new_raise_level = INT_MAX;
+                auto last_pot = pots_[last_pot_idx];
+                for (int pot_player_id : active_players_) {
+                    if (last_pot->get_player_amount(pot_player_id) >= new_raise_level) {
+                        new_raise_level = std::min(new_raise_level, last_pot->get_player_amount(pot_player_id));
+                    }
+                }
+                _split_pot(last_pot_idx, new_raise_level);
+            }   
+            players_[player_idx]->setChips(players_[player_idx]->getChips() - original_amount);
+        }
 
         bool handleAction(Action action) {
             VALIDATE_ACTION(action);
             _handle_action(action);
+            if (everyoneAllIn()) {
+                return true;
+            }
             _move_to_next_player();
             
             return current_player_ == last_to_act_;
+        }
+
+        int getCurrentPlayer() {
+            return current_player_;
+        }
+        int everyoneAllIn() {
+            return all_in_count_ == pots_.back()->players_in_pot().size();
         }
 
         int chipsToCall(int player_id) {

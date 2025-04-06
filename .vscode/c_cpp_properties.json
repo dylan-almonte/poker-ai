@@ -4,9 +4,10 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/ai/**",
-                "${workspaceFolder}/engine/**",
+                "${workspaceFolder}/engine_v2/**",
                 "${workspaceFolder}/extern/libtorch/include/torch/csrc/api/include",
-                "${workspaceFolder}/extern/libtorch/include"
+                "${workspaceFolder}/extern/libtorch/include",
+                "${workspaceFolder}/engine_v2/include"
             ],
             "defines": [],
             "macFrameworkPath": [

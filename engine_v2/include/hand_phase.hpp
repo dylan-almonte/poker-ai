@@ -14,7 +14,7 @@ public:
 
     static const int NEW_CARDS[];  // Cards to deal in each phase
     static const Phase NEXT_PHASE[];  // Mapping to next phase
-
+    static const bool IS_BETTING_ROUND[];  // Whether the phase is a betting round
     static int getNewCards(Phase phase) { return NEW_CARDS[phase]; }
     static Phase getNextPhase(Phase phase) { return NEXT_PHASE[phase]; }
 };
@@ -23,6 +23,10 @@ public:
 inline const int HandPhase::NEW_CARDS[] = {0, 0, 3, 1, 1, 0};
 inline const HandPhase::Phase HandPhase::NEXT_PHASE[] = {
     PREFLOP, FLOP, TURN, RIVER, SETTLE, PREHAND
+};
+
+inline const bool HandPhase::IS_BETTING_ROUND[] = {
+    false, true, true, true, true, false
 };
 
 std::string phaseToString(HandPhase::Phase phase) {
