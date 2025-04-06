@@ -1,12 +1,12 @@
 # Minimum CMake version
 cmake_minimum_required(VERSION 3.31)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 add_subdirectory(
-    ${CMAKE_CURRENT_SOURCE_DIR}/../engine
+    ${CMAKE_CURRENT_SOURCE_DIR}/../engine_v2
     ${CMAKE_BINARY_DIR}/engine           
 )
 # Enable testing
@@ -34,4 +34,4 @@ target_link_libraries(engine_tests
     gtest_main
     poker_engine  # Your engine library
 )
-# target_compile_definitions(engine_tests PRIVATE -DDEBUG)
+target_compile_options(engine_tests PRIVATE -g -DDEBUG)

@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.10)
 project(PokerAI)
 
@@ -35,14 +36,14 @@ set_target_properties(poker_ai PROPERTIES
 #     googletest
 #     GIT_REPOSITORY https://github.com/google/googletest.git
 #     GIT_TAG release-1.11.0
-# )
+)
 # FetchContent_MakeAvailable(googletest)
 
 # # Create test executable
 # add_executable(engine_tests
 #     tests/engine/game_test.cpp
 #     # Add other test files here
-# )
+)
 
 # # Link against gtest and your engine library
 # target_link_libraries(engine_tests
@@ -50,4 +51,4 @@ set_target_properties(poker_ai PROPERTIES
 #     gtest
 #     gtest_main
 #     poker_engine  # Your engine library
-# )
+)

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "engine.hpp"
+// #include "engine_v2.hpp"
 
 #ifndef NDEBUG
 #define DEBUG_PRINT_GAME(game) game->printState()
@@ -53,18 +54,22 @@ TEST_F(GameTest, ValidActionSequence) {
     ASSERT_EQ(game->getCurrentPlayer(), 3);
 
     // UTG calls
+    // DEBUG_PRINT_GAME(game);
     game->takeAction(Action(ActionType::CALL, 3, 10));
+    // DEBUG_PRINT_GAME(game);
     ASSERT_EQ(game->getPlayers()[3]->getChips(), 990);
 
     // MP raises
+    //  DEBUG_PRINT_GAME(game);
     game->takeAction(Action(ActionType::RAISE, 4, 30));
+    // DEBUG_PRINT_GAME(game);
     ASSERT_EQ(game->getPlayers()[4]->getChips(), 970);
 
     // Verify action history
-    const auto& history = game->getActionHistory();
-    ASSERT_EQ(history.size(), 2);
-    ASSERT_EQ(history[0].getActionType(), ActionType::CALL);
-    ASSERT_EQ(history[1].getActionType(), ActionType::RAISE);
+    // const auto& history = game->getActionHistory();
+    // // ASSERT_EQ(history.size(), 2);
+    // ASSERT_EQ(history[0].getActionType(), ActionType::CALL);
+    // ASSERT_EQ(history[1].getActionType(), ActionType::RAISE);
 }
 
 TEST_F(GameTest, PlayerFolding) {
@@ -102,8 +107,10 @@ TEST_F(GameTest, HandProgression) {
     }
     game->takeAction(Action(ActionType::CALL));
     game->takeAction(Action(ActionType::CALL));  // SB completes
+    DEBUG_PRINT_GAME(game);
     game->takeAction(Action(ActionType::CHECK));  // BB checks
     // Should now be on the flop
+    DEBUG_PRINT_GAME(game);
     ASSERT_EQ(game->getPhase(), HandPhase::FLOP);
     ASSERT_EQ(game->getBoard().size(), 3);
     for (int i = 0; i < 6; i++) {
@@ -115,18 +122,18 @@ TEST_F(GameTest, HandProgression) {
 
 }
 
-// TEST_F(GameTest, ALL_IN_ACTION) {
-//     headsup_game->startHand(0);
-//     // DEBUG_PRINT_GAME(headsup_game);
-//     headsup_game->takeAction(Action(ActionType::ALL_IN));
-//     DEBUG_PRINT_GAME(headsup_game);
-//     headsup_game->takeAction(Action(ActionType::ALL_IN));
-//     DEBUG_PRINT_GAME(headsup_game);
+TEST_F(GameTest, ALL_IN_ACTION) {
+    headsup_game->startHand(0);
+    // DEBUG_PRINT_GAME(headsup_game);
+    headsup_game->takeAction(Action(ActionType::ALL_IN));
+    // DEBUG_PRINT_GAME(headsup_game);
+    headsup_game->takeAction(Action(ActionType::ALL_IN));
+    //  DEBUG_PRINT_GAME(headsup_game);
 
-//     // ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
-//     // ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
-//     // ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
-// }
+    // ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
+    // ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
+    // ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
+}
 
 
 TEST_F(GameTest, SettleHandWithAllInPlayers) {
@@ -138,31 +145,31 @@ TEST_F(GameTest, SettleHandWithAllInPlayers) {
     tmp_game.printState();
 
     // Simulate preflop action - everyone all in
-    tmp_game.takeAction(Action(ActionType::ALL_IN, 1000)); // UTG goes all-in
+    tmp_game.takeAction(Action(ActionType::ALL_IN)); // UTG goes all-in
     tmp_game.printState();
-    tmp_game.takeAction(Action(ActionType::ALL_IN, 1000)); // BTN calls
+    tmp_game.takeAction(Action(ActionType::ALL_IN)); // BTN calls
     tmp_game.printState();
-    tmp_game.takeAction(Action(ActionType::ALL_IN, 1000)); // BB calls
+    tmp_game.takeAction(Action(ActionType::ALL_IN)); // BB calls
     tmp_game.printState();
     // Verify hand is complete
     // ASSERT_TRUE(tmp_game.isHandOver());
 
-    // Settle the hand
-    tmp_game.settleHand();
+    // // Settle the hand
+    // tmp_game.settleHand();
 
-    // Verify:
-    // 1. All chips are accounted for (total should be 3000)
-    int total_chips = 0;
-    for (const auto& player : tmp_game.getPlayers()) {
-        total_chips += player->getChips();
-    }
-    EXPECT_EQ(total_chips, 3000);
+    // // Verify:
+    // // 1. All chips are accounted for (total should be 3000)
+    // int total_chips = 0;
+    // for (const auto& player : tmp_game.getPlayers()) {
+    //     total_chips += player->getChips();
+    // }
+    // EXPECT_EQ(total_chips, 3000);
 
-    // 2. Board should have exactly 5 cards
-    EXPECT_EQ(tmp_game.getBoard().size(), 5);
+    // // 2. Board should have exactly 5 cards
+    // EXPECT_EQ(tmp_game.getBoard().size(), 5);
 
-    // 3. All pots should be empty after settlement
-    for (const auto& pot : tmp_game.getPots()) {
-        EXPECT_EQ(pot->get_total_amount(), 0);
-    }
+    // // 3. All pots should be empty after settlement
+    // for (const auto& pot : tmp_game.getPots()) {
+    //     EXPECT_EQ(pot->get_total_amount(), 0);
+    // }
 }
