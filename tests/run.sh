@@ -7,8 +7,6 @@
 # make
 # cd ..
 # ./build/dcgan
-mkdir -p build
-cd build
-cmake ..
-cmake --build .
-./engine_tests
+cmake -B build 
+cmake --build build
+./build/engine_tests
