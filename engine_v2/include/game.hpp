@@ -72,9 +72,11 @@ public:
         state.player_chips = std::vector<int>(players_.size(), 0);
         state.player_bets = std::vector<int>(players_.size(), 0);
         state.player_rewards = std::vector<int>(players_.size(), 0);
+        state.player_states = std::vector<PlayerState>(players_.size(), PlayerState::OUT);
         for (size_t i = 0; i < players_.size(); ++i) {
             state.player_chips[i] = players_[i]->getChips();
             state.player_bets[i] = pots_.back()->get_player_amount(i);
+            state.player_states[i] = players_[i]->getState();
         }
         state.board = std::vector<Card>(5, Card(-1));
         for (size_t i = 0; i < board_.size(); ++i) {

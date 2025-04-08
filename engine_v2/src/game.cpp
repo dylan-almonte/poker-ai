@@ -98,7 +98,8 @@ Game::Game(int num_players, int starting_chips, int small_blind, int big_blind)
     , small_blind_(small_blind)
     , big_blind_(big_blind)
     , betting_round_(std::make_unique<BettingRound>()) {
-
+    
+    phase_ = HandPhase::Phase::PREFLOP;
 
     // Initialize players
     for (int i = 0; i < num_players; i++) {
