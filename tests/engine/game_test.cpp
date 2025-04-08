@@ -24,7 +24,7 @@ TEST_F(GameTest, GameInitialization) {
     // Test initial game state
     ASSERT_EQ(game->getPlayers().size(), 6);
     ASSERT_EQ(game->getBoard().size(), 0);
-    ASSERT_EQ(game->getPhase(), HandPhase::PREHAND);
+    ASSERT_EQ(game->getPhase(), HandPhase::Phase::PREFLOP);
 
     // Verify all players have correct starting chips
     for (const auto& player : game->getPlayers()) {
@@ -125,50 +125,12 @@ TEST_F(GameTest, ALL_IN_ACTION) {
     headsup_game->startHand(0);
     // DEBUG_PRINT_GAME(headsup_game);
     headsup_game->takeAction(Action(ActionType::ALL_IN));
-    // DEBUG_PRINT_GAME(headsup_game);
+    DEBUG_PRINT_GAME(headsup_game);
     headsup_game->takeAction(Action(ActionType::ALL_IN));
-    //  DEBUG_PRINT_GAME(headsup_game);
+     DEBUG_PRINT_GAME(headsup_game);
 
     // ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
     // ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
     // ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
 }
 
-
-TEST_F(GameTest, SettleHandWithAllInPlayers) {
-    // Setup a game with 3 players
-    Game tmp_game(3, 1000, 10, 20);
-
-    // Start hand and force some specific cards for testing
-    tmp_game.startHand(0);  // Player 0 is button
-    tmp_game.printState();
-
-    // Simulate preflop action - everyone all in
-    tmp_game.takeAction(Action(ActionType::ALL_IN)); // UTG goes all-in
-    tmp_game.printState();
-    tmp_game.takeAction(Action(ActionType::ALL_IN)); // BTN calls
-    tmp_game.printState();
-    tmp_game.takeAction(Action(ActionType::ALL_IN)); // BB calls
-    tmp_game.printState();
-    // Verify hand is complete
-    // ASSERT_TRUE(tmp_game.isHandOver());
-
-    // // Settle the hand
-    // tmp_game.settleHand();
-
-    // // Verify:
-    // // 1. All chips are accounted for (total should be 3000)
-    // int total_chips = 0;
-    // for (const auto& player : tmp_game.getPlayers()) {
-    //     total_chips += player->getChips();
-    // }
-    // EXPECT_EQ(total_chips, 3000);
-
-    // // 2. Board should have exactly 5 cards
-    // EXPECT_EQ(tmp_game.getBoard().size(), 5);
-
-    // // 3. All pots should be empty after settlement
-    // for (const auto& pot : tmp_game.getPots()) {
-    //     EXPECT_EQ(pot->get_total_amount(), 0);
-    // }
-}

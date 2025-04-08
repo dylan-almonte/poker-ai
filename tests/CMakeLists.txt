@@ -34,4 +34,10 @@ target_link_libraries(engine_tests
     gtest_main
     poker_engine  # Your engine library
 )
-target_compile_options(engine_tests PRIVATE -g -DDEBUG)
+target_compile_options(engine_tests PRIVATE 
+    -g 
+    -DDEBUG 
+    -fsanitize=address 
+    -fno-omit-frame-pointer
+)
+target_link_options(engine_tests PRIVATE -fsanitize=address)

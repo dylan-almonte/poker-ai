@@ -4,6 +4,7 @@
 #include "deck.hpp"
 #include "hand_phase.hpp"
 #include "action.hpp"
+#include "game_state.hpp"
 #include "state_machines.hpp"
 #include "hand_phase.hpp"
 
@@ -14,7 +15,7 @@ private:
     std::vector<std::shared_ptr<Pot>> pots_;
     std::vector<Card> board_;
 
-    BettingRound betting_round_;
+    std::unique_ptr<BettingRound> betting_round_;
     Deck deck_;
     HandPhase::Phase phase_;
     int btn_loc_;
@@ -35,18 +36,20 @@ private:
     
     void _move_blinds();
 
+    // returns rewards for each player
     void _settle_hand();
     
 
 
 
 public:
+    
     Game(int num_players, int starting_chips, int small_blind, int big_blind);
     
     // Core game flow methods
-    void startHand(int btn_loc = -1);
+    GameState startHand(int btn_loc = -1);
 
-    void takeAction(Action action);
+    GameState takeAction(Action action);
     bool isHandOver() const;
     bool isHandComplete() const;
     
@@ -58,8 +61,31 @@ public:
     HandPhase::Phase getPhase() const { return phase_; }
     
     
+    void printState() const;
+
+    GameState getGameState() const {
+        GameState state;
+        state.num_players = players_.size();
+        state.num_pots = pots_.size();
+        state.current_player = current_player_;
+        state.street = phase_;
+        state.player_chips = std::vector<int>(players_.size(), 0);
+        state.player_bets = std::vector<int>(players_.size(), 0);
+        state.player_rewards = std::vector<int>(players_.size(), 0);
+        for (size_t i = 0; i < players_.size(); ++i) {
+            state.player_chips[i] = players_[i]->getChips();
+            state.player_bets[i] = pots_.back()->get_player_amount(i);
+        }
+        state.board = std::vector<Card>(5, Card(-1));
+        for (size_t i = 0; i < board_.size(); ++i) {
+            state.board[i] = board_[i];
+        }
+        state.hole_cards = std::pair<Card, Card>(players_[current_player_]->getHand()[0], 
+                                                 players_[current_player_]->getHand()[1]);
+        state.hand_phase = phase_;
+        return state;
+    }
     // Game state helpers
 
     // Debug helper
-    void printState() const;
 }; 

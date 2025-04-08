@@ -29,8 +29,12 @@ target_include_directories(poker_engine
 target_compile_options(poker_engine PRIVATE
     -Wall
     -Wextra
+    -O0
     -g
+    -fsanitize=address
+    -fno-omit-frame-pointer
 )
+target_link_options(poker_engine PRIVATE -fsanitize=address)
 
 set_target_properties(poker_engine PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin

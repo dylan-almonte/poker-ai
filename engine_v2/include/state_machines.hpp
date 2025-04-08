@@ -140,6 +140,11 @@ class BettingRound {
         }
 
     public:
+        BettingRound(const BettingRound&) = default;  // Copy constructor
+        BettingRound& operator=(const BettingRound&) = default;  // Copy assignment
+        BettingRound(BettingRound&&) = default;  // Move constructor
+        BettingRound& operator=(BettingRound&&) = default;  // Move assignment
+        ~BettingRound() = default;  // Destructor
         BettingRound() : players_(), pots_(), last_to_act_(-1) {}
         BettingRound(std::vector<std::shared_ptr<Player>> players, 
                      std::vector<std::shared_ptr<Pot>> pots, 
@@ -228,6 +233,7 @@ class BettingRound {
             return current_player_;
         }
         int everyoneAllIn() {
+            return active_players_.size() == 0;
             return all_in_count_ == pots_.back()->players_in_pot().size();
         }
 

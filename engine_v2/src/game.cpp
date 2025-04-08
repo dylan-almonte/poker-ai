@@ -64,6 +64,7 @@ void Game::_settle_hand() {
             winners.push_back(player_id);
         }
     }
+    
 
     // Split pot among winners
     int win_amount = pot->get_total_amount() / winners.size();
@@ -96,7 +97,8 @@ Game::Game(int num_players, int starting_chips, int small_blind, int big_blind)
     , current_player_(0)
     , small_blind_(small_blind)
     , big_blind_(big_blind)
-    , betting_round_(BettingRound()) {
+    , betting_round_(std::make_unique<BettingRound>()) {
+
 
     // Initialize players
     for (int i = 0; i < num_players; i++) {
@@ -109,8 +111,9 @@ Game::Game(int num_players, int starting_chips, int small_blind, int big_blind)
     pots_.push_back(std::make_shared<Pot>());
 }
 
-void Game::startHand(int btn_loc) {
+GameState Game::startHand(int btn_loc) {
     board_.clear();
+    
     for (auto& player : players_) {
         player->clearHand();
         player->setState(PlayerState::TO_CALL);
@@ -138,38 +141,42 @@ void Game::startHand(int btn_loc) {
     // Set initial player to act (UTG - first after BB)
     current_player_ = (bb_loc + 1) % players_.size();
     phase_ = HandPhase::Phase::PREFLOP;
-    betting_round_ = BettingRound(players_, pots_, bb_loc);
-    betting_round_.post_player_bets(sb_loc, small_blind_);
-    betting_round_.post_player_bets(bb_loc, big_blind_);
+    betting_round_ = std::make_unique<BettingRound>(players_, pots_, bb_loc);
+    betting_round_->post_player_bets(sb_loc, small_blind_);
+    betting_round_->post_player_bets(bb_loc, big_blind_);
+    return getGameState();
 
 };
 
-void Game::takeAction(Action action) {
+GameState Game::takeAction(Action action) {
     bool next_round = false;
     
     if (HandPhase::IS_BETTING_ROUND[phase_]) {
-        next_round = betting_round_.handleAction(action);
-        current_player_ = betting_round_.getCurrentPlayer();
+        next_round = betting_round_->handleAction(action);
+        current_player_ = betting_round_->getCurrentPlayer();
     }
     if (next_round) {
-        phase_ = betting_round_.everyoneAllIn() ? HandPhase::Phase::SETTLE : HandPhase::getNextPhase(phase_);
+        phase_ = betting_round_->everyoneAllIn() ? HandPhase::Phase::SETTLE : HandPhase::getNextPhase(phase_);
 
-        if (phase_ == HandPhase::Phase::SETTLE) {
+        if (isHandOver()) {
             _settle_hand();
-            pots_.clear();
-            pots_.push_back(std::make_shared<Pot>());
-            return;
+            GameState state = getGameState();
+            state.is_terminal = true;
+            for (int i = 0; i < players_.size(); i++) {
+                auto player = players_[i];
+                state.player_rewards[i] = player->getInitialStack() - player->getChips();
+            }
+            return state;
         }
-        betting_round_ = BettingRound(players_, pots_, btn_loc_); 
+        betting_round_ = std::make_unique<BettingRound>(players_, pots_, btn_loc_); 
         int new_cards = HandPhase::getNewCards(phase_);
         if (new_cards > 0) {
             auto cards = deck_.draw(new_cards);
             board_.insert(board_.end(), cards.begin(), cards.end());
         }
-        current_player_ = betting_round_.getCurrentPlayer();
-
-        
+        current_player_ = betting_round_->getCurrentPlayer();
     }
+    return getGameState();
 };
 bool Game::isHandOver() const {
     return phase_ == HandPhase::Phase::SETTLE;
