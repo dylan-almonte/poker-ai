@@ -122,13 +122,18 @@ TEST_F(GameTest, HandProgression) {
 }
 
 TEST_F(GameTest, ALL_IN_ACTION) {
-    headsup_game->startHand(0);
+    GameState state;
+    state = headsup_game->startHand(0);
+    state.print();
     // DEBUG_PRINT_GAME(headsup_game);
-    headsup_game->takeAction(Action(ActionType::ALL_IN));
-    DEBUG_PRINT_GAME(headsup_game);
-    headsup_game->takeAction(Action(ActionType::ALL_IN));
-     DEBUG_PRINT_GAME(headsup_game);
-
+    state = headsup_game->takeAction(Action(ActionType::ALL_IN));
+    // DEBUG_PRINT_GAME(headsup_game);
+    state = headsup_game->takeAction(Action(ActionType::ALL_IN));
+    // DEBUG_PRINT_GAME(headsup_game);
+    ASSERT_EQ(state.street, HandPhase::Phase::SETTLE);
+    ASSERT_EQ(state.is_terminal, true);
+    ASSERT_EQ(state.player_rewards[0], -state.player_rewards[1]);
+    state.print();
     // ASSERT_EQ(game->getPlayers()[3]->getState(), PlayerState::ALL_IN);
     // ASSERT_EQ(game->getPlayers()[3]->getChips(), 0);
     // ASSERT_TRUE(game->getPlayers()[3]->isAllIn());
