@@ -67,7 +67,9 @@ int Card::getPrime() const {
 }
 
 std::string Card::toString() const {
+    if (card_int_ == -1) return "?";
     std::string result;
+    
     result += STR_RANKS[getRank()];
     result += INT_SUIT_TO_CHAR_SUIT[getSuit()];
     return result;
