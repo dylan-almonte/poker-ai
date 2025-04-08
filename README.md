@@ -11,18 +11,21 @@ I want to make this as modular as possible so that I can experiment with differe
 
 I also wanted to learn more about poker theory and deep learning in general, so that's the main motivation for this project. 
 
+## Research
+Please refer to [paper](papers/) for papers that are referenced
+Useful [website](https://www.cs.cmu.edu/~sandholm/cs15-888F24/)
 
 ## Project Structure
 
 - `main.cpp`: Main file for running the poker AI.
-- `engine_v2/`: Directory for the poker engine implementation.
+- `engine/`: Directory for the poker engine implementation.
 - `ai/deep_cfr/`: Directory for the Deep CFR implementation.
 - `lib/`: Directory for the custom neural network library.
 
 
 ### TODO
 
-- [X] Fix bug where all players go all in at the same time
+- [ ] Fix bug where all players go all in at the same time
 - [ ] Make general game interface for AI to use
 - [ ] Make an engine to play against the AI
 - [ ] Adjust game engine to be thread safe
@@ -35,7 +38,7 @@ to start
 Make a branch to start developing
 `git checkout -b <branchname>`
 
-## Instructions for Andy 
+## Instructions for Andy
 
 1. to download the repo
 `git clone https://github.com/dylan-almonte/poker-ai`
