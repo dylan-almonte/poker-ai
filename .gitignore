@@ -9,3 +9,5 @@ lib/
 *.lib
 *.exp
 tmp.py
+models/
+.vscode/
