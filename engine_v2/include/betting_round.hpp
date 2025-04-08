@@ -9,6 +9,7 @@
 #include <deque>
 #include <unordered_map>
 #include <iostream>
+
 #ifdef DEBUG
 #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define VALIDATE_ACTION(action) if (!_valid_action(action)) { throw std::invalid_argument("Invalid action"); }
@@ -234,7 +235,6 @@ class BettingRound {
         }
         int everyoneAllIn() {
             return active_players_.size() == 0;
-            return all_in_count_ == pots_.back()->players_in_pot().size();
         }
 
         int chipsToCall(int player_id) {

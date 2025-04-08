@@ -5,7 +5,7 @@
 #include "hand_phase.hpp"
 #include "action.hpp"
 #include "game_state.hpp"
-#include "state_machines.hpp"
+#include "betting_round.hpp"
 #include "hand_phase.hpp"
 
 class Game {
@@ -25,10 +25,8 @@ private:
     int big_blind_;
     int last_raise_ = 0;
     bool _isHandOver() const;
+
     void _takeAction(Action action);
-
-    
-
 
     void _deal_cards();
     
@@ -59,7 +57,6 @@ public:
     const std::vector<std::shared_ptr<Pot>>& getPots() const { return pots_; }
     int getCurrentPlayer() const { return current_player_; }
     HandPhase::Phase getPhase() const { return phase_; }
-    
     
     void printState() const;
 
