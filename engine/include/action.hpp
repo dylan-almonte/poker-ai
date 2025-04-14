@@ -1,6 +1,14 @@
+/** 
+ * @file action.hpp
+ * @brief Defines the Action class and related enums
+ * 
+ * This file contains the definition of the Action class, which represents a player's action in a poker game.
+ * It includes the ActionType enum, which specifies the type of action (raise, all in, call, check, fold),
+ * and the Action class, which represents an action with an optional amount and player ID.
+ */
+
 #pragma once
 #include <string>
-
 enum class ActionType {
     RAISE,  // Raises the latest pot
     ALL_IN, // Posts all available chips to the current pot

@@ -78,5 +78,5 @@
         "mdspan": "cpp",
         "pointers": "cpp"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/g++"
+    "C_Cpp.default.compilerPath": "/usr/bin/clang++"
 }
