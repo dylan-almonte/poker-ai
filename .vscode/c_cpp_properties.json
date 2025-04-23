@@ -7,7 +7,9 @@
                 "${workspaceFolder}/engine_v2/**",
                 "${workspaceFolder}/extern/libtorch/include/torch/csrc/api/include",
                 "${workspaceFolder}/extern/libtorch/include",
-                "${workspaceFolder}/engine_v2/include"
+                "${workspaceFolder}/engine_v2/include",
+                "${workspaceFolder}/interface/server/include",
+                "${workspaceFolder}/extern/pytorch/third_party/opentelemetry-cpp/third_party/nlohmann-json/include"
             ],
             "defines": [],
             "macFrameworkPath": [
