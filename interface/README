@@ -1,0 +1,42 @@
+sequenceDiagram
+
+    Client->>+Server: REGISTER
+    Note left of Server: Player joining
+    Server-->>+Engine: *adds player
+    Engine-->>-Server: updated game state
+    Server->>-Client: PLAYER_JOINS
+    Note left of Server: Need to handle start and end game
+
+    
+
+    Client->>+Server: ACTION_REQUEST
+    Note left of Server: Taking action in game
+    Server-->>+Engine: Game.takeAction
+    Engine-->>-Server: *updated game state
+    Server->>-Client: GAME_STATE_UPDATE
+
+    
+
+// Example message format
+{
+    "type": "ACTION_REQUEST",
+    "data": {
+        "action_type": "RAISE",
+        "amount": 100,
+        "player_id": 1
+    }
+}
+
+// Response
+{
+    "type": "GAME_STATE_UPDATE",
+    "data": {
+        "community_cards": ["Ah", "Kd", "Qc"],
+        "current_player": 2,
+        "pot": 500,
+        "players": [
+            {"id": 1, "chips": 900, "cards": ["As", "Ad"]},
+            {"id": 2, "chips": 1100, "cards": ["hidden", "hidden"]}
+        ]
+    }
+}

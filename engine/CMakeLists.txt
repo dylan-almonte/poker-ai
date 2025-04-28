@@ -42,3 +42,6 @@ set_target_properties(poker_engine PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
 target_compile_definitions(poker_engine PRIVATE DDEBUG)
+
+# Add the server subdirectory
+add_subdirectory(interface/server)

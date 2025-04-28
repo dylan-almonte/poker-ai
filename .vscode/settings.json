@@ -76,7 +76,8 @@
         "iterator": "cpp",
         "coroutine": "cpp",
         "mdspan": "cpp",
-        "pointers": "cpp"
+        "pointers": "cpp",
+        "thread": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }
