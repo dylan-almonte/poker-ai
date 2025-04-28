@@ -3,13 +3,7 @@
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceFolder}/ai/**",
-                "${workspaceFolder}/engine/**",
-                "${workspaceFolder}/extern/libtorch/include/torch/csrc/api/include",
-                "${workspaceFolder}/extern/libtorch/include",
-                "${workspaceFolder}/engine/include",
-                "${workspaceFolder}/interface/server/include",
-                "${workspaceFolder}/extern/pytorch/third_party/opentelemetry-cpp/third_party/nlohmann-json/include"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "macFrameworkPath": [
@@ -17,10 +11,7 @@
             ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
-            "cppStandard": "c++20",
-            "compileCommands": [
-                "${workspaceFolder}/extern/pytorch-build/compile_commands.json"
-            ]
+            "cppStandard": "c++20"
         }
     ],
     "version": 4

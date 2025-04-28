@@ -1,12 +1,10 @@
-#include "poker_server.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <algorithm>
+#include "server/poker_server.h"
 
-// Include necessary poker engine headers
-// Note: You'll need to replace these with your actual header files
-// #include "../../../include/game.h"
+
 
 using json = nlohmann::json;
 
