@@ -8,6 +8,6 @@ lib/
 *.dll
 *.lib
 *.exp
-tmp.py
+tmp*
 models/
 .vscode/

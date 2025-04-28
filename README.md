@@ -12,22 +12,20 @@ This repository contains a poker game with a server-client model. The server is 
 ```
 poker-ai/
 ├── src/                  # Main source code
-│   ├── engine/           # C++ engine code
-│   │   ├── include/      # Engine include files
-│   │   └── src/          # Engine source files
-│   ├── server/           # Server implementation
-│   │   ├── include/      # Header files
-│   │   └── src/          # Source files
-│   ├── client/           # Client implementations
-│   │   └── go/           # Go client implementation
-│   │       ├── poker_client.go
-│   │       └── go.mod
-│   ├── ai/               # AI implementations
-│   └── include/          # Shared include files
-├── test/                 # Test files
-│   ├── engine/           # Engine tests
-│   └── CMakeLists.txt    # Test build configuration
-└── CMakeLists.txt        # Main build configuration
+│   ├── ai/               # AI implementations (Deep CFR, MCCFR)
+│   ├── client/           # C++ client implementation
+│   ├── engine/           # Core poker engine (game logic, cards, etc.)
+│   ├── go/               # Go client/app implementation
+│   ├── include/          # Header files for all components
+│   └── server/           # Server implementation
+├── test/                 # Test files and test runners
+├── third_party/          # Third-party dependencies
+└── tools/                # Development and utility tools
+    ├── examples/         # Example applications
+    ├── interface/        # Interface utilities
+    ├── trainer/          # AI training tools
+    └── util/             # Utility scripts
+
 ```
 
 ## Building the Server
