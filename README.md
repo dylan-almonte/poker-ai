@@ -11,19 +11,23 @@ This repository contains a poker game with a server-client model. The server is 
 
 ```
 poker-ai/
-├── engine/               # C++ engine code
-│   ├── interface/
-│   │   └── server/       # Server implementation
-│   │       ├── include/  # Header files
-│   │       ├── src/      # Source files
-│   │       └── examples/ # Example applications
-│   ├── include/          # Engine include files
-│   ├── src/              # Engine source files
-│   └── CMakeLists.txt
-└── clients/
-    └── go/               # Go client implementation
-        ├── poker_client.go
-        └── go.mod
+├── src/                  # Main source code
+│   ├── engine/           # C++ engine code
+│   │   ├── include/      # Engine include files
+│   │   └── src/          # Engine source files
+│   ├── server/           # Server implementation
+│   │   ├── include/      # Header files
+│   │   └── src/          # Source files
+│   ├── client/           # Client implementations
+│   │   └── go/           # Go client implementation
+│   │       ├── poker_client.go
+│   │       └── go.mod
+│   ├── ai/               # AI implementations
+│   └── include/          # Shared include files
+├── test/                 # Test files
+│   ├── engine/           # Engine tests
+│   └── CMakeLists.txt    # Test build configuration
+└── CMakeLists.txt        # Main build configuration
 ```
 
 ## Building the Server
@@ -163,14 +167,6 @@ I also wanted to learn more about poker theory and deep learning in general, so 
 Please refer to [paper](papers/) for papers that are referenced
 Useful [website](https://www.cs.cmu.edu/~sandholm/cs15-888F24/)
 
-## Project Structure
-
-- `main.cpp`: Main file for running the poker AI.
-- `engine/`: Directory for the poker engine implementation.
-- `ai/deep_cfr/`: Directory for the Deep CFR implementation.
-- `lib/`: Directory for the custom neural network library.
-
-
 ### TODO
 
 - [ ] Fix bug where all players go all in at the same time
@@ -185,27 +181,3 @@ to start
 
 Make a branch to start developing
 `git checkout -b <branchname>`
-
-## Instructions for Andy
-
-1. to download the repo
-`git clone https://github.com/dylan-almonte/poker-ai`
-
-2. change to the engine branch
-`git checkout engine`
-
-3. create a new branch with your username/ and what your working on (this will branch off of engine)
-`git checkout -b <username>/<feature>`
-like this
-`git checkout -b dcabahug/engine`
-
-5. push your branch to the remote repo
-`git push -u origin <branch name>`
-this is the same branch name you made in prev step
-example:
-`git push -u origin dcabahug/engine`
-
-6. you can start working now
-
-to build your code, ask chat to make the run.sh files into .bat files
-
