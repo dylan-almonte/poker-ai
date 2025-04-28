@@ -37,7 +37,7 @@ target_include_directories(poker_server
 
 # Link libraries
 target_link_libraries(poker_server
-    PUBLIC
+    PUBLICsd
         nlohmann_json::nlohmann_json
         poker_engine
 )

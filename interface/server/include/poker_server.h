@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <nlohmann/json.hpp>
+#include "engine.hpp"
 
 // Forward declarations for poker engine classes
 namespace poker {
